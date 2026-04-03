@@ -3,11 +3,12 @@ import { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { supabase } from '../lib/supabase';
+import { Colors } from '../constants/colors';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0033',
+    backgroundColor: Colors.bg,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
@@ -83,6 +84,7 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          onSubmitEditing={handleLogin} 
         />
         <Button title={loading ? '로그인 중...' : '로그인'} onPress={handleLogin} />
 

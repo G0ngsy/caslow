@@ -48,7 +48,20 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Tab.Navigator>
+      <Tab.Navigator 
+      screenOptions={() => ({
+    // 기본 헤더 끄기
+    headerShown: false,
+    // 탭바 스타일
+    tabBarStyle: {
+      backgroundColor: '#1A0033',
+      borderTopColor: '#A14EFF',
+    },
+    tabBarActiveTintColor: '#D1A3FF',
+    tabBarInactiveTintColor: '#A14EFF',
+  })}
+      >
+        
         <Tab.Screen name="홈" component={HomeScreen}
           options={{ tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }} />
         <Tab.Screen name="지출" component={ExpenseScreen}

@@ -1,14 +1,19 @@
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { supabase } from '../lib/supabase';
+import Header from '../components/Header';
+import { Colors } from '../constants/colors';
 
 // 스타일 정의
 const styles = StyleSheet.create({
   // 전체 화면 컨테이너
-  container: {
-    flex: 1,
-    backgroundColor: '#1A0033',
-    padding: 24,
-  },
+ container: {
+  flex: 1,
+  backgroundColor: Colors.bg,      // Colors에서 가져오기
+},
+
+content: {
+  padding: 24,
+},
   // 화면 제목
   title: {
     color: '#E6CCFF',
@@ -34,19 +39,17 @@ const styles = StyleSheet.create({
   },
   // 로그아웃 버튼
   logoutButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#E24B4A',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    marginTop: 16,
+  backgroundColor: '#E11D48',
+  borderRadius: 16,
+  padding: 20,
+  alignItems: 'center',
+  marginTop: 16,
   },
-  // 로그아웃 텍스트 (빨간색)
+  // 로그아웃 텍스트 
   logoutText: {
-    color: '#E24B4A',
-    fontSize: 16,
-    fontWeight: 'bold',
+  color: 'white',
+  fontSize: 16,
+  fontWeight: 'bold',
   },
 });
 
@@ -69,8 +72,10 @@ const handleLogout = async () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>설정</Text>
+      {/* 커스텀 헤더 */}
+      <Header title="설정" />
 
+      <View style={styles.content}>
       {/* 카테고리 관리 (나중에 구현) */}
       <TouchableOpacity style={styles.card}>
         <Text style={styles.cardText}>카테고리 관리</Text>
@@ -90,7 +95,7 @@ const handleLogout = async () => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>로그아웃</Text>
       </TouchableOpacity>
-
+      </View>
     </View>
   );
 }
