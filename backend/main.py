@@ -3,22 +3,31 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from routers import expenses
+from scheduler import start_scheduler
 
-app = FastAPI()
+# 앱 시작/종료 시 실행되는 함수
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 서버 시작할 때 스케줄러 시작
+    start_scheduler()
+    yield
+    # 서버 종료할 때 스케줄러 종료
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS 설정
 # 프론트엔드에서 백엔드 API 호출할 수 있게 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 모든 도메인 허용 
+    allow_origins=["*"],  # 모든 도메인 허용 (개발 중)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 라우터 등록
-# /expenses 경로로 시작하는 API들을 expenses 라우터에 연결
 app.include_router(expenses.router)
 
 # 서버 상태 확인용 API
