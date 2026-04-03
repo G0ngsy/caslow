@@ -9,6 +9,7 @@ interface InputProps {
   secureTextEntry?: boolean;
   keyboardType?: 'default' | 'email-address' | 'numeric';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  onSubmitEditing?: () => void; 
 }
 
 const styles = StyleSheet.create({
@@ -39,6 +40,7 @@ export default function Input({
   secureTextEntry = false,
   keyboardType = 'default',
   autoCapitalize = 'sentences',
+  onSubmitEditing,
 }: InputProps) {
 
   const [isVisible, setIsVisible] = useState(false);
@@ -55,6 +57,7 @@ export default function Input({
       secureTextEntry={secureTextEntry && !isVisible}
       keyboardType={keyboardType}
       autoCapitalize={autoCapitalize}
+      onSubmitEditing={onSubmitEditing}
     />
     {secureTextEntry && value.length > 0 && (
   <TouchableOpacity

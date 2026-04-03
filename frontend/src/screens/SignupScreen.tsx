@@ -3,11 +3,12 @@ import { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { supabase } from '../lib/supabase';
+import { Colors } from '../constants/colors';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A0033',
+    backgroundColor: Colors.bg, 
   },
   content: {
     flexGrow: 1,
