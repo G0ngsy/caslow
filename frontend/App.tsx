@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, ActivityIndicator } from 'react-native';
-
+import SplashScreen from './src/screens/SplashScreen';
 
 import { supabase } from './src/lib/supabase';
 import LoginScreen from './src/screens/LoginScreen';
@@ -24,7 +24,9 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      setTimeout(() => {
       setLoading(false);
+    }, 2000);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
@@ -33,11 +35,7 @@ export default function App() {
   }, []);
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#1A0033', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#8A2BE2" />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   if (!session) {
