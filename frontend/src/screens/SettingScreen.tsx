@@ -8,7 +8,7 @@ const styles = StyleSheet.create({
   // 전체 화면 컨테이너
  container: {
   flex: 1,
-  backgroundColor: Colors.bg,      // Colors에서 가져오기
+  backgroundColor: Colors.bgMain,      // Colors에서 가져오기
 },
 
 content: {
