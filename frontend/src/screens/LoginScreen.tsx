@@ -8,42 +8,42 @@ import { Colors } from '../constants/colors';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
+    backgroundColor: Colors.bg,           // #1B1E3E
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
   title: {
-    color: '#E6CCFF',
+    color: Colors.accentLight,            // #FAD493
     fontSize: 36,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    color: '#B980FF',
+    color: Colors.textSub,                // #A3D8F1
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 32,
   },
   card: {
-  backgroundColor: '#330066',
-  borderRadius: 20,
-  padding: 24,
-  borderWidth: 1,
-  borderColor: '#A14EFF',
-  boxShadow: '0px 0px 0px 0px #B980FF',
-  shadowColor: '#B980FF',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.6,
-  shadowRadius: 20,
-  elevation: 10,
-},
+    backgroundColor: '#1D3052',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#255DAA',
+    boxShadow: '0px 0px 40px 10px rgba(37, 93, 170, 0.4)',
+    shadowColor: '#255DAA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 10,
+  },
   linkButton: {
     alignItems: 'center',
     marginTop: 20,
   },
   linkText: {
-    color: '#B980FF',
+    color: Colors.textSub,                // #A3D8F1
     fontSize: 14,
   },
 });

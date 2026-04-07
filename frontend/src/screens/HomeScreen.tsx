@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import Header from '../components/Header';
 
 // 임시 더미 데이터
 const dummyExpenses = [
@@ -52,6 +53,8 @@ function formatAmount(amount: number): string {
   return amount.toLocaleString('ko-KR') + '원';
 }
 
+
+
 // 오늘/지난 구분 함수
 function getDateLabel(dateStr: string): string {
   const today = new Date().toISOString().split('T')[0];
@@ -76,26 +79,26 @@ function getRandomQuote(): string {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgMain,
+    backgroundColor: Colors.bgMain,       // #E3F2FF
   },
   header: {
-    backgroundColor: '#0F0720',
+    backgroundColor: Colors.bgHeader,     // #1B1E3E
     paddingHorizontal: 20,
     paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#6B3FA0',
+    borderBottomColor: '#255DAA',
   },
   logo: {
-    color: '#C4B5FD',
+    color: Colors.accentLight,            // #FAD493
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 2,
   },
   headerTitle: {
-    color: '#F3E8FF',
+    color: Colors.white,
     fontSize: 16,
     fontWeight: 'bold',
     position: 'absolute',
@@ -109,36 +112,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   greeting: {
-    color: '#8B5CF6',
+    color: '#437CA1',
     fontSize: 16,
     marginBottom: 6,
   },
   quote: {
-    color: '#6B3FA0',
+    color: '#255DAA',
     fontSize: 14,
     fontStyle: 'italic',
     textAlign: 'center',
   },
   summaryCard: {
     margin: 16,
-    backgroundColor: '#2D1B54',
+    backgroundColor: '#1B1E3E',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#6B3FA0',
-    shadowColor: '#7C3AED',
+    borderColor: '#255DAA',
+    shadowColor: '#255DAA',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 5,
   },
   summaryLabel: {
-    color: '#C4B5FD',
+    color: Colors.textSub,                // #A3D8F1
     fontSize: 13,
     marginBottom: 8,
   },
   summaryAmount: {
-    color: '#F3E8FF',
+    color: Colors.accentLight,            // #FAD493
     fontSize: 36,
     fontWeight: '900',
     marginBottom: 16,
@@ -149,46 +152,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summarySubText: {
-    color: '#8B5CF6',
+    color: '#437CA1',
     fontSize: 12,
   },
   sortButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 4,
-  backgroundColor: '#F5EEF8',
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-},
-sortButtonText: {
-  color: '#d1a3ff',
-  fontSize: 12,
-},
-dropdown: {
-  position: 'absolute',
-  right: 0,
-  top: 36,
-  backgroundColor: '#2D1B54',
-  borderRadius: 10,
-  borderWidth: 1,
-  borderColor: '#6B3FA0',
-  zIndex: 999,
-  minWidth: 90,
-},
-dropdownItem: {
-  padding: 12,
-},
-dropdownText: {
-  color: '#d1a3ff',
-  fontSize: 13,
-},
-dropdownTextActive: {
-  color: '#F3E8FF',
-  fontWeight: 'bold',
-},
-  filterContainer: {
-    marginVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#1D3052',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#255DAA',
   },
+  sortButtonText: {
+    color: Colors.textSub,                // #A3D8F1
+    fontSize: 12,
+  },
+  dropdown: {
+    position: 'absolute',
+    right: 0,
+    top: 36,
+    backgroundColor: '#1D3052',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#255DAA',
+    zIndex: 999,
+    minWidth: 90,
+  },
+  dropdownItem: {
+    padding: 12,
+  },
+  dropdownText: {
+    color: Colors.textSub,                // #A3D8F1
+    fontSize: 13,
+  },
+  dropdownTextActive: {
+    color: Colors.accentLight,            // #FAD493
+    fontWeight: 'bold',
+  },
+  filterContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',         // 줄바꿈
+  paddingHorizontal: 16,
+  paddingVertical: 5,
+  gap: 8,
+},
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,23 +207,24 @@ dropdownTextActive: {
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#6B3FA0',
-    backgroundColor: '#F5EEF8',
-    marginRight: 8,
+    borderColor: Colors.border,           // #ABCCEA
+    backgroundColor: Colors.bgCard,      // #FFFFFF
+    marginRight: 10,
+    
   },
   filterButtonActive: {
-    backgroundColor: '#7C3AED',
-    borderColor: '#7C3AED',
+    backgroundColor: Colors.primary,     // #255DAA
+    borderColor: Colors.primary,
   },
   filterText: {
-    color: '#6B3FA0',
+    color: '#437CA1',
     fontSize: 13,
   },
   filterTextActive: {
-    color: '#F3E8FF',
+    color: Colors.white,
   },
   sectionTitle: {
-    color: '#6B3FA0',
+    color: '#437CA1',
     fontSize: 13,
     fontWeight: 'bold',
     paddingHorizontal: 16,
@@ -223,13 +234,13 @@ dropdownTextActive: {
   expenseItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,      // #FFFFFF
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#EDE9F6',
+    borderColor: '#D2EEFA',
   },
   iconBox: {
     width: 42,
@@ -239,28 +250,142 @@ dropdownTextActive: {
     alignItems: 'center',
     marginRight: 12,
   },
-  expenseTitle: {
-    color: '#2D1B54',
-    fontSize: 15,
-    fontWeight: '600',
-    flex: 1,
-  },
+  
   expenseAmount: {
-    color: '#E11D48',
+    color: Colors.danger,               // #DE525E
     fontSize: 15,
     fontWeight: 'bold',
   },
   expenseDate: {
-  color: '#9CA3AF',
-  fontSize: 12,
-  marginTop: 2,
+    color: '#ABCCEA',
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  summaryHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 12,
 },
+summaryHeaderLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+},
+summaryMonth: {
+  color: Colors.accentLight,
+  fontSize: 13,
+  fontWeight: 'bold',
+  backgroundColor: '#27435F',
+  paddingHorizontal: 10,
+  paddingVertical: 4,
+  borderRadius: 20,
+},
+summaryCount: {
+  color: '#437CA1',
+  fontSize: 13,
+  marginTop: 4,
+  marginBottom: 16,
+},
+progressSection: {
+  marginTop: 8,
+},
+progressLabelRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 6,
+},
+progressLabel: {
+  color: '#437CA1',
+  fontSize: 12,
+},
+progressPercent: {
+  color: Colors.accentLight,
+  fontSize: 12,
+  fontWeight: 'bold',
+},
+progressBar: {
+  height: 6,
+  backgroundColor: '#27435F',
+  borderRadius: 3,
+  overflow: 'hidden',
+},
+progressFill: {
+  height: '100%',
+  backgroundColor: Colors.accentLight,
+  borderRadius: 3,
+},
+progressFooter: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginTop: 6,
+},
+progressFooterText: {
+  color: '#437CA1',
+  fontSize: 11,
+},
+
+listHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  paddingHorizontal: 16,
+  marginTop: 8,
+  marginBottom: 4,
+},
+listTitle: {
+  color: Colors.textDark,
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+sectionRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+},
+sectionDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: Colors.primary,
+},
+expenseTitle: {
+  color: Colors.textDark,
+  fontSize: 15,
+  fontWeight: '600',
+},
+expenseTitleRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+  
+},
+categoryBadge: {
+  paddingHorizontal: 8,
+  paddingVertical: 2,
+  borderRadius: 10,
+},
+categoryBadgeText: {
+  fontSize: 11,
+  fontWeight: '600',
+},
+dropdownRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+},
+
 });
 
 export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  // 임시 예산 (나중에 설정에서 입력받을 예정)
+  const budget = 500000;
 
   // 카테고리 필터 적용
   const filteredExpenses = selectedCategory === 'all'
@@ -287,13 +412,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>Caslow</Text>
-        <Text style={styles.headerTitle}>홈</Text>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={24} color="#C4B5FD" />
-        </TouchableOpacity>
-      </View>
+      <Header showLogo showIcons />
 
       {/* 인사말 + 명언 */}
       <View style={styles.greetingBox}>
@@ -304,59 +423,79 @@ export default function HomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* 이번 달 요약 카드 */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>이번 달 총 지출</Text>
-          <Text style={styles.summaryAmount}>- {formatAmount(totalAmount)}</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summarySubText}>2026년 4월</Text>
+          <View style={styles.summaryHeader}>
+            <View style={styles.summaryHeaderLeft}>
+              <Ionicons name="wallet-outline" size={16} color={Colors.textSub} />
+              <Text style={styles.summaryLabel}>이번 달 총 지출</Text>
+            </View>
+            <Text style={styles.summaryMonth}>4월</Text>
+          </View>
+          <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
+          <Text style={styles.summaryCount}>{dummyExpenses.length}건의 지출</Text>
+          <View style={styles.progressSection}>
+            <View style={styles.progressLabelRow}>
+              <Text style={styles.progressLabel}>예산 대비</Text>
+              <Text style={styles.progressPercent}>
+                {Math.round((totalAmount / budget) * 100)}%
+              </Text>
+            </View>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, {
+                width: `${Math.min((totalAmount / budget) * 100, 100)}%`
+              }]} />
+            </View>
+            <View style={styles.progressFooter}>
+              <Text style={styles.progressFooterText}>잔여: ₩{formatAmount(budget - totalAmount)}</Text>
+              <Text style={styles.progressFooterText}>예산: ₩{formatAmount(budget)}</Text>
+            </View>
           </View>
         </View>
 
-        {/* 카테고리 필터 + 정렬 드롭다운 */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', zIndex: 999 }}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={[styles.filterContainer, { flex: 1 }]}
-            contentContainerStyle={{ paddingHorizontal: 16 }}
-          >
-            {categories.map(cat => (
-              <TouchableOpacity
-                key={cat.key}
-                style={[
-                  styles.filterButton,
-                  selectedCategory === cat.key && styles.filterButtonActive
-                ]}
-                onPress={() => setSelectedCategory(cat.key)}
-              >
-                <Ionicons
-                  name={cat.icon as any}
-                  size={14}
-                  color={selectedCategory === cat.key ? '#F3E8FF' : '#6B3FA0'}
-                />
-                <Text style={[
-                  styles.filterText,
-                  selectedCategory === cat.key && styles.filterTextActive
-                ]}>
-                  {cat.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        {/* 카테고리 필터 */}
+        
+          {/* 카테고리 필터 */}
+<View style={styles.filterContainer}>
+  {categories.map(cat => (
+    <TouchableOpacity
+      key={cat.key}
+      style={[
+        styles.filterButton,
+        selectedCategory === cat.key && styles.filterButtonActive
+      ]}
+      onPress={() => setSelectedCategory(cat.key)}
+    >
+      <Ionicons
+        name={cat.icon as any}
+        size={14}
+        color={selectedCategory === cat.key ? Colors.white : '#437CA1'}
+      />
+      <Text style={[
+        styles.filterText,
+        selectedCategory === cat.key && styles.filterTextActive
+      ]}>
+        {cat.label}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
+        
 
-          {/* 정렬 드롭다운 */}
-          <View style={{ marginRight: 16, zIndex: 999 }}>
+        {/* 지출 내역 헤더 */}
+        <View style={[styles.listHeader, { zIndex: 999 }]}>
+          <Text style={styles.listTitle}>지출 내역</Text>
+          <View style={{ zIndex: 999 }}>
             <TouchableOpacity
               style={styles.sortButton}
               onPress={() => setShowSortDropdown(!showSortDropdown)}
             >
-              <Ionicons name="swap-vertical" size={14} color="#C4B5FD" />
+              <Ionicons name="swap-vertical" size={14} color={Colors.textSub} />
               <Text style={styles.sortButtonText}>
                 {sortOrder === 'newest' ? '최신순' : '과거순'}
               </Text>
               <Ionicons
                 name={showSortDropdown ? 'chevron-up' : 'chevron-down'}
                 size={12}
-                color="#C4B5FD"
+                color={Colors.textSub}
               />
             </TouchableOpacity>
 
@@ -366,17 +505,27 @@ export default function HomeScreen() {
                   style={styles.dropdownItem}
                   onPress={() => { setSortOrder('newest'); setShowSortDropdown(false); }}
                 >
-                  <Text style={[styles.dropdownText, sortOrder === 'newest' && styles.dropdownTextActive]}>
-                    최신순
-                  </Text>
+                  <View style={styles.dropdownRow}>
+                    <Text style={[styles.dropdownText, sortOrder === 'newest' && styles.dropdownTextActive]}>
+                      최신순
+                    </Text>
+                    {sortOrder === 'newest' && (
+                      <Ionicons name="checkmark" size={14} color={Colors.accentLight} />
+                    )}
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.dropdownItem}
                   onPress={() => { setSortOrder('oldest'); setShowSortDropdown(false); }}
                 >
-                  <Text style={[styles.dropdownText, sortOrder === 'oldest' && styles.dropdownTextActive]}>
-                    과거순
-                  </Text>
+                  <View style={styles.dropdownRow}>
+                    <Text style={[styles.dropdownText, sortOrder === 'oldest' && styles.dropdownTextActive]}>
+                      과거순
+                    </Text>
+                    {sortOrder === 'oldest' && (
+                      <Ionicons name="checkmark" size={14} color={Colors.accentLight} />
+                    )}
+                  </View>
                 </TouchableOpacity>
               </View>
             )}
@@ -386,7 +535,10 @@ export default function HomeScreen() {
         {/* 지출 목록 */}
         {Object.entries(grouped).map(([label, items]) => (
           <View key={label}>
-            <Text style={styles.sectionTitle}>{label}</Text>
+            <View style={styles.sectionRow}>
+              <View style={styles.sectionDot} />
+              <Text style={styles.sectionTitle}>{label}</Text>
+            </View>
             {items.map(expense => {
               const config = categoryConfig[expense.category] || categoryConfig.default;
               return (
@@ -394,12 +546,18 @@ export default function HomeScreen() {
                   <View style={[styles.iconBox, { backgroundColor: config.color + '22' }]}>
                     <Ionicons name={config.icon as any} size={22} color={config.color} />
                   </View>
-                  {/* 지출명 + 날짜 */}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.expenseTitle}>{expense.title}</Text>
+                    <View style={styles.expenseTitleRow}>
+                      <Text style={styles.expenseTitle}>{expense.title}</Text>
+                      <View style={[styles.categoryBadge, { backgroundColor: config.color + '22' }]}>
+                        <Text style={[styles.categoryBadgeText, { color: config.color }]}>
+                          {categories.find(c => c.key === expense.category)?.label || '기타'}
+                        </Text>
+                      </View>
+                    </View>
                     <Text style={styles.expenseDate}>{expense.date}</Text>
                   </View>
-                  <Text style={styles.expenseAmount}>- {formatAmount(expense.amount)}</Text>
+                  <Text style={styles.expenseAmount}>-₩{formatAmount(expense.amount)}</Text>
                 </View>
               );
             })}

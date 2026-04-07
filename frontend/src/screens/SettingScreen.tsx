@@ -5,51 +5,42 @@ import { Colors } from '../constants/colors';
 
 // 스타일 정의
 const styles = StyleSheet.create({
-  // 전체 화면 컨테이너
- container: {
-  flex: 1,
-  backgroundColor: Colors.bgMain,      // Colors에서 가져오기
-},
-
-content: {
-  padding: 24,
-},
-  // 화면 제목
-  title: {
-    color: '#E6CCFF',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 32,
-    marginTop: 16,
+  container: {
+    flex: 1,
+    backgroundColor: Colors.bgMain,    // #E3F2FF
   },
-  // 설정 항목 카드
+  content: {
+    padding: 24,
+  },
   card: {
-    backgroundColor: '#330066',
+    backgroundColor: Colors.bgCard,    // #FFFFFF
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#7A00CC',
+    borderColor: Colors.border,        // #ABCCEA
     marginBottom: 16,
+    shadowColor: '#255DAA',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  // 설정 항목 텍스트
   cardText: {
-    color: '#E6CCFF',
+    color: Colors.textDark,            // #1B1E3E
     fontSize: 16,
     fontWeight: '500',
   },
-  // 로그아웃 버튼
   logoutButton: {
-  backgroundColor: '#E11D48',
-  borderRadius: 16,
-  padding: 20,
-  alignItems: 'center',
-  marginTop: 16,
+    backgroundColor: Colors.danger,    // #DE525E
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginTop: 16,
   },
-  // 로그아웃 텍스트 
   logoutText: {
-  color: 'white',
-  fontSize: 16,
-  fontWeight: 'bold',
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
