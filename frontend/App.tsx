@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+
 import SplashScreen from './src/screens/SplashScreen';
 
 import { supabase } from './src/lib/supabase';

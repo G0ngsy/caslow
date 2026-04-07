@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import { PieChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
+import React, { useState } from 'react';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -40,11 +41,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    elevation: 2, // Android 그림자 (그대로 유지)
+    // ✅ shadow* 대신 boxShadow 사용 (RN 0.76+ deprecated 경고 제거)
+    boxShadow: '0px 2px 4px rgba(27, 30, 62, 0.1)',
   },
   cardTitle: {
     color: Colors.textDark,
@@ -130,55 +129,45 @@ export default function AnalysisScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
     >
-         {/* Progress Ring 차트 */}
-<View style={styles.card}>
-  <Text style={styles.cardTitle}>카테고리별 지출</Text>
-  <Text style={{ color: '#437CA1', fontSize: 12, marginBottom: 16 }}>
-    총 지출 ₩{formatAmount(totalAmount)}
-  </Text>
+              {/* 파이 차트 */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>카테고리별 지출</Text>
+          
+          {/* 총 지출액 */}
+          <Text style={{ color: '#437CA1', fontSize: 12, marginBottom: 12 }}>
+            총 지출 ₩{formatAmount(totalAmount)}
+          </Text>
 
-  <View style={styles.donutRow}>
-    {/* SVG 동심원 링 */}
-    <Svg width={160} height={160} viewBox="0 0 160 160">
-      <G rotation="-90" origin="80, 80">
-        {categoryData.map((cat, index) => {
-          const radius = 65 - index * 13; // 링마다 반지름 줄이기
-          const circumference = 2 * Math.PI * radius;
-          const percent = cat.amount / totalAmount;
-          const strokeDashoffset = circumference * (1 - percent);
-          return (
-            <G key={cat.key}>
-              {/* 배경 링 */}
-              <Circle
-                cx="80"
-                cy="80"
-                r={radius}
-                stroke={cat.color + '30'}
-                strokeWidth="10"
-                fill="none"
-              />
-              {/* 채워진 링 */}
-              <Circle
-                cx="80"
-                cy="80"
-                r={radius}
-                stroke={cat.color}
-                strokeWidth="10"
-                fill="none"
-                strokeDasharray={`${circumference} ${circumference}`}
-                strokeDashoffset={strokeDashoffset}
-                strokeLinecap="round"
-              />
-            </G>
-          );
-        })}
-      </G>
-    </Svg>
-
-    {/* 카테고리 목록 */}
+          <View style={styles.donutRow}>
+            <PieChart
+              data={pieData}
+              width={160}
+              height={160}
+              chartConfig={{ color: () => Colors.primary }}
+              accessor="population"
+              backgroundColor="transparent"
+              paddingLeft="30"
+              hasLegend={false}
+            />
+            {/* ✅ 카테고리 목록: 각 항목에 박스 카드 테두리 */}
     <View style={styles.categoryList}>
       {categoryData.map(cat => (
-        <View key={cat.key} style={styles.categoryRow}>
+        <View
+          key={cat.key}
+          style={[
+            styles.categoryRow,
+            {
+              // 박스 카드 테두리
+              borderWidth: 1,
+              borderColor: '#D6E8F7',
+              borderRadius: 10,
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              marginBottom: 3,
+              backgroundColor: '#F5FAFF',
+            }
+          ]}
+        >
           <View style={styles.categoryLeft}>
             <View style={[styles.categoryDot, { backgroundColor: cat.color }]} />
             <Text style={styles.categoryName}>{cat.name}</Text>
@@ -241,7 +230,7 @@ export default function AnalysisScreen() {
         <Text style={styles.aiText}>
           이번 달 총 지출이 ₩{formatAmount(totalAmount)}으로 나타났습니다.
           쇼핑과 구독 서비스 비용이 전체의 {Math.round(((32000 + 17000) / totalAmount) * 100)}%를 차지하고 있어요.
-          불필요한 구독 서비스를 점검하고 쇼핑 지출을 줄이면 절약에 도움이 될 것 같아요.
+          불필요한 구독 서비스를 점검하고 쇼핑 지출을 줄이면 절약에 도움이 될 것 같아요. 
         </Text>
       </View>
     </ScrollView>
