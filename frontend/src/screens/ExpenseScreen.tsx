@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgMain,
+    backgroundColor: Colors.bgMain,       // #E3F2FF
   },
   content: {
     flex: 1,
@@ -15,14 +15,14 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   title: {
-    color: '#2D1B54',
+    color: Colors.textDark,               // #1B1E3E
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    color: '#6B3FA0',
+    color: '#437CA1',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 48,
@@ -34,13 +34,13 @@ const styles = StyleSheet.create({
   },
   optionButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,       // #FFFFFF
     borderRadius: 20,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EDE9F6',
-    shadowColor: '#7C3AED',
+    borderColor: Colors.border,           // #ABCCEA
+    shadowColor: '#255DAA',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -50,13 +50,13 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: '#F5EEF8',
+    backgroundColor: '#D2EEFA',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
   optionText: {
-    color: '#2D1B54',
+    color: Colors.textDark,               // #1B1E3E
     fontSize: 15,
     fontWeight: '600',
   },
@@ -77,7 +77,7 @@ export default function ExpenseScreen() {
           {/* 사진 촬영 */}
           <TouchableOpacity style={styles.optionButton}>
             <View style={styles.iconBox}>
-              <Ionicons name="camera" size={32} color="#7C3AED" />
+              <Ionicons name="camera" size={32} color={Colors.primary} />
             </View>
             <Text style={styles.optionText}>사진 촬영</Text>
           </TouchableOpacity>
@@ -87,7 +87,7 @@ export default function ExpenseScreen() {
             onPress={() => navigation.navigate('ExpenseForm')}
           >
             <View style={styles.iconBox}>
-              <Ionicons name="create" size={32} color="#7C3AED" />
+              <Ionicons name="create" size={32} color={Colors.primary} />
             </View>
             <Text style={styles.optionText}>직접 입력</Text>
           </TouchableOpacity>

@@ -1,8 +1,9 @@
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Colors } from '../constants/colors';
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#8A2BE2',
+    backgroundColor: Colors.primary,     // #255DAA
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -12,15 +13,15 @@ const styles = StyleSheet.create({
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#8A2BE2',
+    borderColor: Colors.primary,         // #255DAA
   },
   text: {
-    color: 'white',
+    color: Colors.white,
     fontWeight: 'bold',
     fontSize: 16,
   },
   outlineText: {
-    color: '#8A2BE2',
+    color: Colors.primary,               // #255DAA
   },
 });
 

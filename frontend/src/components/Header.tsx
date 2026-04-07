@@ -1,62 +1,90 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/colors';
 
 interface HeaderProps {
-  title?: string;        // 화면 제목
-  showLogo?: boolean;    // 로고 표시 여부 (홈 화면)
-  showBack?: boolean;    // 뒤로가기 버튼 여부
-  onBack?: () => void;   // 뒤로가기 함수
+  title?: string;
+  showLogo?: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
+  showIcons?: boolean;  // 홈 화면에서만 아이콘 표시
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1A0033',
+    backgroundColor: Colors.bgHeader,
     paddingHorizontal: 20,
     paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#A14EFF',
+    borderBottomColor: '#255DAA',
   },
-  // 로고 텍스트 (홈 화면)
   logo: {
-    color: '#E6CCFF',
+    color: Colors.accentLight,
     fontSize: 22,
     fontWeight: 'bold',
     flex: 1,
-    textAlign: 'center',
   },
-  // 메뉴명 텍스트
   title: {
-    color: '#E6CCFF',
+    color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
     flex: 1,
     textAlign: 'center',
   },
-  // 뒤로가기 버튼
   backButton: {
     position: 'absolute',
     left: 20,
     zIndex: 1,
   },
+  // 오른쪽 아이콘 그룹
+  iconGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
 });
 
-export default function Header({ title, showLogo = false, showBack = false, onBack }: HeaderProps) {
+export default function Header({ title, showLogo = false, showBack = false, onBack, showIcons = false }: HeaderProps) {
   return (
-    <View style={styles.container}>
-      {/* 뒤로가기 버튼 */}
-      {showBack && (
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Ionicons name="chevron-back" size={24} color="#E6CCFF" />
-        </TouchableOpacity>
-      )}
+  <View style={styles.container}>
+    {showBack && (
+      <TouchableOpacity style={styles.backButton} onPress={onBack}>
+        <Ionicons name="chevron-back" size={24} color={Colors.white} />
+      </TouchableOpacity>
+    )}
 
-      {/* 로고 or 메뉴명 */}
-      {showLogo
-        ? <Text style={styles.logo}>Caslow</Text>
-        : <Text style={styles.title}>{title}</Text>
-      }
-    </View>
-  );
+    {/* 로고 or 타이틀 */}
+    {showLogo
+      ? <Text style={styles.logo}>Caslow</Text>
+      : <Text style={styles.title}>{title}</Text>
+    }
+
+    {/* 가운데 홈 텍스트 (showLogo일 때만) */}
+    {showLogo && (
+      <Text style={{
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: 'bold',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+      }}>홈</Text>
+    )}
+
+    {/* 오른쪽 아이콘 */}
+    {showIcons && (
+      <View style={styles.iconGroup}>
+        <TouchableOpacity>
+          <Ionicons name="chatbubble-outline" size={22} color={Colors.accentLight} />
+        </TouchableOpacity>
+        <TouchableOpacity>
+          <Ionicons name="notifications-outline" size={22} color={Colors.accentLight} />
+        </TouchableOpacity>
+      </View>
+    )}
+  </View>
+);
 }

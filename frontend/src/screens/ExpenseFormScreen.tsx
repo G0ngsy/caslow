@@ -19,74 +19,82 @@ const categories = [
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgMain,
+    backgroundColor: Colors.bgMain,       // #E3F2FF
   },
-  // 섹션 라벨
   label: {
-    color: '#6B3FA0',
+    color: '#437CA1',
     fontSize: 13,
     fontWeight: 'bold',
     marginBottom: 8,
     marginTop: 20,
     letterSpacing: 0.5,
   },
-  // 금액 입력
   amountBox: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,       // #FFFFFF
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#EDE9F6',
+    borderColor: Colors.border,           // #ABCCEA
     flexDirection: 'row',
     alignItems: 'center',
   },
   amountPrefix: {
-    color: '#2D1B54',
+    color: Colors.textDark,               // #1B1E3E
     fontSize: 24,
     fontWeight: 'bold',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
-    color: '#2D1B54',
+    color: Colors.textDark,               // #1B1E3E
     fontSize: 24,
     fontWeight: 'bold',
   },
-  // 카테고리 선택
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  categoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#EDE9F6',
-    backgroundColor: '#FFFFFF',
-  },
-  categoryButtonActive: {
-    borderColor: '#7C3AED',
-    backgroundColor: '#F5EEF8',
-  },
-  categoryText: {
-    color: '#6B3FA0',
-    fontSize: 13,
-  },
-  categoryTextActive: {
-    color: '#7C3AED',
-    fontWeight: 'bold',
-  },
-  // AI 추천 뱃지
+  aiAnalyzing: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 6,
+  marginBottom: 12,
+},
+aiAnalyzingText: {
+  color: Colors.primary,
+  fontSize: 12,
+},
+categoryGrid: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 10,
+  
+},
+categoryButton: {
+  width: '30%',
+  paddingVertical: 16,
+  backgroundColor: Colors.bgCard,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: Colors.border,
+  justifyContent: 'center',
+  alignItems: 'center',
+  gap: 8,
+},
+categoryButtonActive: {
+  borderColor: Colors.primary,
+  borderWidth: 2,
+  backgroundColor: '#D2EEFA',
+},
+categoryText: {
+  color: Colors.textDark,
+  fontSize: 13,
+},
+categoryTextActive: {
+  color: Colors.primary,
+  fontWeight: 'bold',
+},
   aiBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EDE9F6',
+    backgroundColor: '#D2EEFA',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -94,32 +102,30 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   aiBadgeText: {
-    color: '#7C3AED',
+    color: Colors.primary,               // #255DAA
     fontSize: 11,
   },
-  // 날짜 선택
   dateButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,      // #FFFFFF
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EDE9F6',
+    borderColor: Colors.border,          // #ABCCEA
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   dateText: {
-    color: '#2D1B54',
+    color: Colors.textDark,              // #1B1E3E
     fontSize: 15,
   },
-  // 메모 입력
   memoInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.bgCard,      // #FFFFFF
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EDE9F6',
-    color: '#2D1B54',
+    borderColor: Colors.border,          // #ABCCEA
+    color: Colors.textDark,              // #1B1E3E
     fontSize: 15,
     height: 100,
     textAlignVertical: 'top',
@@ -172,7 +178,7 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
           <TextInput
             style={styles.amountInput}
             placeholder="0"
-            placeholderTextColor="#C4B5FD"
+            placeholderTextColor="#ABCCEA"
             value={amount}
             onChangeText={setAmount}
             keyboardType="numeric"
@@ -181,6 +187,15 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
 
         {/* 카테고리 선택 */}
         <Text style={styles.label}>카테고리</Text>
+
+        {/* AI 분석 중 표시 */}
+        {aiSuggestedCategory && (
+          <View style={styles.aiAnalyzing}>
+            <Ionicons name="sparkles" size={12} color={Colors.primary} />
+            <Text style={styles.aiAnalyzingText}>AI 카테고리를 분석중...</Text>
+          </View>
+        )}
+
         <View style={styles.categoryGrid}>
           {categories.map(cat => (
             <TouchableOpacity
@@ -193,8 +208,8 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
             >
               <Ionicons
                 name={cat.icon as any}
-                size={16}
-                color={selectedCategory === cat.key ? '#7C3AED' : cat.color}
+                size={28}
+                color={selectedCategory === cat.key ? cat.color : cat.color}
               />
               <Text style={[
                 styles.categoryText,
@@ -212,7 +227,7 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
             style={styles.aiBadge}
             onPress={() => setSelectedCategory(aiSuggestedCategory)}
           >
-            <Ionicons name="sparkles" size={12} color="#7C3AED" />
+            <Ionicons name="sparkles" size={12} color={Colors.primary} />
             <Text style={styles.aiBadgeText}>
               AI 추천: {categories.find(c => c.key === aiSuggestedCategory)?.label}
             </Text>
@@ -223,7 +238,7 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
         <Text style={styles.label}>날짜</Text>
         <TouchableOpacity style={styles.dateButton}>
           <Text style={styles.dateText}>{date}</Text>
-          <Ionicons name="calendar-outline" size={20} color="#7C3AED" />
+          <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
         </TouchableOpacity>
 
         {/* 메모 입력 */}
@@ -231,7 +246,7 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
         <TextInput
           style={styles.memoInput}
           placeholder="메모를 입력해주세요"
-          placeholderTextColor="#C4B5FD"
+          placeholderTextColor="#ABCCEA"
           value={memo}
           onChangeText={setMemo}
           multiline

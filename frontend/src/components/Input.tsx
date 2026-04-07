@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { TextInput, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/colors';
 
 interface InputProps {
   placeholder: string;
@@ -16,15 +17,14 @@ const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 12,
   },
-   input: {
-    backgroundColor: '#2D0057',
-    color: 'white',
+  input: {
+    backgroundColor: '#27435F',
+    color: Colors.white,
     padding: 16,
     borderRadius: 12,
-    marginBottom: 12,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#7A00CC',
+    borderColor: '#437CA1',
   },
   eyeButton: {
     position: 'absolute',
@@ -50,7 +50,7 @@ export default function Input({
     <View style={styles.wrapper}>
     <TextInput
       placeholder={placeholder}
-      placeholderTextColor="#7A00CC"
+      placeholderTextColor="#ABCCEA"
       value={value}
       onChangeText={onChangeText}
       style={styles.input}
@@ -67,7 +67,7 @@ export default function Input({
     <Ionicons
       name={isVisible ? 'eye' : 'eye-off'}
       size={22}
-      color="#7A00CC"
+      color={Colors.primary}
     />
   </TouchableOpacity>
 )}
