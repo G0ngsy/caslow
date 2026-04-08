@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
 
 interface HeaderProps {
@@ -47,6 +48,7 @@ const styles = StyleSheet.create({
 });
 
 export default function Header({ title, showLogo = false, showBack = false, onBack, showIcons = false }: HeaderProps) {
+  const navigation = useNavigation<any>();
   return (
   <View style={styles.container}>
     {showBack && (
@@ -77,7 +79,7 @@ export default function Header({ title, showLogo = false, showBack = false, onBa
     {/* 오른쪽 아이콘 */}
     {showIcons && (
       <View style={styles.iconGroup}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
           <Ionicons name="chatbubble-outline" size={22} color={Colors.accentLight} />
         </TouchableOpacity>
         <TouchableOpacity>

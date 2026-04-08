@@ -1,18 +1,559 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
+import GoalEditModal, { Goal, GOAL_TYPES } from './GoalEditModal';
+
+// 더미 데이터
+const dummyGoals: Goal[] = [
+  {
+    id: '1',
+    title: '비상금 마련',
+    targetAmount: 1000000,
+    currentAmount: 350000,
+    type: '비상금',
+    deadline: '2026-12-31',
+    color: '#255DAA',
+  },
+  {
+    id: '2',
+    title: '여행 자금',
+    targetAmount: 500000,
+    currentAmount: 120000,
+    type: '여행',
+    deadline: '2026-08-01',
+    color: '#10B981',
+  },
+];
+
+function formatAmount(amount: number): string {
+  return amount.toLocaleString('ko-KR');
+}
+
+function getAiAdvice(goal: Goal, percent: number): string {
+  const typeAdvice: Record<string, string> = {
+    '저축': '매달 고정 저축액을 설정하고 자동이체를 활용하면 효과적입니다.',
+    '투자': '분산 투자로 리스크를 줄이고, 장기적 관점으로 접근하세요.',
+    '비상금': '생활비 3~6개월치를 목표로 하는 것이 좋습니다.',
+    '여행': '항공·숙박·식비로 나눠 세부 계획을 세우면 절약에 도움이 됩니다.',
+    '교육': '교육비 지원 제도나 할인 프로그램을 먼저 알아보세요.',
+    '기타': '목표를 작은 단계로 나눠 꾸준히 진행하세요.',
+  };
+
+  let progressMsg = '';
+  if (percent < 25) progressMsg = '이제 막 시작했네요! 작은 금액이라도 꾸준히 모으는 게 중요해요.';
+  else if (percent < 50) progressMsg = `${percent}% 달성! 좋은 출발이에요. 지금 페이스를 유지하세요.`;
+  else if (percent < 75) progressMsg = `절반 이상 달성했어요! 조금만 더 힘내세요.`;
+  else if (percent < 100) progressMsg = `거의 다 왔어요! ${100 - percent}%만 더 채우면 목표 달성입니다.`;
+  else progressMsg = '목표를 달성했어요! 새로운 목표를 설정해보세요.';
+
+  const specific = typeAdvice[goal.type] ?? typeAdvice['기타'];
+  return `${progressMsg}\n\n${specific}`;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.bgMain,
   },
+  // 목표 없을 때 빈 화면
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyText: {
+    color: '#437CA1',
+    fontSize: 15,
+  },
+  emptySubText: {
+    color: Colors.border,
+    fontSize: 13,
+  },
+  // 목표 카드
+  goalCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    elevation: 6,
+    shadowColor: '#1A3A5C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  goalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  goalDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  goalTitle: {
+    color: Colors.textDark,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  goalHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  editBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.bgMain,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalTypeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: '#D2EEFA',
+  },
+  goalTypeText: {
+    color: Colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  goalAmountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  goalCurrentAmount: {
+    color: Colors.primary,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  goalTargetAmount: {
+    color: '#437CA1',
+    fontSize: 15,
+  },
+  // 프로그레스 바
+  progressBar: {
+    height: 8,
+    backgroundColor: '#D2EEFA',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  goalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  goalPercent: {
+    color: Colors.primary,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  goalDeadline: {
+    color: '#ABCCEA',
+    fontSize: 12,
+  },
+  // AI 조언 박스
+  aiAdviceBox: {
+    marginTop: 14,
+    backgroundColor: Colors.bgMain,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 6,
+  },
+  aiAdviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  aiAdviceTitle: {
+    color: Colors.primary,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  aiAdviceText: {
+    color: Colors.textDark,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  // + 버튼
+  addButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  // 새 목표 모달
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 24,
+    padding: 24,
+    gap: 12,
+    width: '100%',
+  },
+  modalTitle: {
+    color: Colors.textDark,
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalInput: {
+    backgroundColor: Colors.bgMain,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    color: Colors.textDark,
+    fontSize: 15,
+  },
+  modalAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bgMain,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 4,
+  },
+  modalAmountPrefix: {
+    color: Colors.textDark,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  modalAmountInput: {
+    flex: 1,
+    color: Colors.textDark,
+    fontSize: 15,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  typeButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+  },
+  typeButtonActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  typeText: {
+    color: '#437CA1',
+    fontSize: 13,
+  },
+  typeTextActive: {
+    color: Colors.white,
+    fontWeight: 'bold',
+  },
+  modalSaveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  modalSaveBtnText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.bgMain,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.bgMain,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  dateText: {
+    color: Colors.textDark,
+    fontSize: 15,
+  },
 });
 
 export default function GoalScreen() {
+  const [goals, setGoals] = useState<Goal[]>(dummyGoals);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+
+  // 새 목표 모달
+  const [showModal, setShowModal] = useState(false);
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [selectedType, setSelectedType] = useState('저축');
+  const [deadline, setDeadline] = useState('');
+
+  const resetModal = () => {
+    setTitle('');
+    setAmount('');
+    setSelectedType('저축');
+    setDeadline('');
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    resetModal();
+  };
+
+  const handleAddGoal = () => {
+    if (!title || !amount) return;
+    const newGoal: Goal = {
+      id: Date.now().toString(),
+      title,
+      targetAmount: parseInt(amount),
+      currentAmount: 0,
+      type: selectedType,
+      deadline,
+      color: Colors.primary,
+    };
+    setGoals(prev => [...prev, newGoal]);
+    handleCloseModal();
+  };
+
+  const handleSaveEdit = (updated: Goal) => {
+    setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
+    setEditingGoal(null);
+  };
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
+
   return (
     <View style={styles.container}>
       <Header title="목표" />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: 16, paddingBottom: 100 }}
+      >
+        {goals.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="flag-outline" size={48} color={Colors.border} />
+            <Text style={styles.emptyText}>아직 설정한 목표가 없어요</Text>
+            <Text style={styles.emptySubText}>+ 버튼을 눌러 목표를 만들어보세요</Text>
+          </View>
+        ) : (
+          goals.map(goal => {
+            const percent = Math.round((goal.currentAmount / goal.targetAmount) * 100);
+            const isExpanded = expandedId === goal.id;
+
+            return (
+              <TouchableOpacity
+                key={goal.id}
+                style={styles.goalCard}
+                onPress={() => toggleExpand(goal.id)}
+                activeOpacity={0.85}
+              >
+                {/* 헤더 */}
+                <View style={styles.goalHeader}>
+                  <View style={styles.goalTitleRow}>
+                    <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
+                    <Text style={styles.goalTitle}>{goal.title}</Text>
+                  </View>
+                  <View style={styles.goalHeaderRight}>
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => setEditingGoal(goal)}
+                    >
+                      <Ionicons name="create-outline" size={16} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <View style={styles.goalTypeBadge}>
+                      <Text style={styles.goalTypeText}>{goal.type}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* 금액 */}
+                <View style={styles.goalAmountRow}>
+                  <Text style={styles.goalCurrentAmount}>₩{formatAmount(goal.currentAmount)}</Text>
+                  <Text style={styles.goalTargetAmount}>₩{formatAmount(goal.targetAmount)}</Text>
+                </View>
+
+                {/* 프로그레스 바 */}
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, {
+                    width: `${Math.min(percent, 100)}%`,
+                    backgroundColor: goal.color,
+                  }]} />
+                </View>
+
+                {/* 푸터 */}
+                <View style={styles.goalFooter}>
+                  <Text style={styles.goalPercent}>달성률 {percent}%</Text>
+                  <Text style={styles.goalDeadline}>기한: {goal.deadline}</Text>
+                </View>
+
+                {/* AI 조언 (확장 시) */}
+                {isExpanded && (
+                  <View style={styles.aiAdviceBox}>
+                    <View style={styles.aiAdviceHeader}>
+                      <Ionicons name="sparkles" size={13} color={Colors.primary} />
+                      <Text style={styles.aiAdviceTitle}>AI 조언</Text>
+                    </View>
+                    <Text style={styles.aiAdviceText}>{getAiAdvice(goal, percent)}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
+
+      {/* + 추가 버튼 */}
+      <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
+        <Ionicons name="add" size={28} color={Colors.white} />
+      </TouchableOpacity>
+
+      {/* 새 목표 모달 */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <TouchableOpacity style={styles.modalOverlay} onPress={handleCloseModal}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalCard}>
+            {/* 헤더 */}
+            <View style={styles.goalHeader}>
+              <Text style={styles.modalTitle}>새 목표 만들기</Text>
+              <TouchableOpacity style={styles.closeBtn} onPress={handleCloseModal}>
+                <Ionicons name="close" size={18} color={Colors.textDark} />
+              </TouchableOpacity>
+            </View>
+
+            {/* 목표 이름 */}
+            <TextInput
+              style={styles.modalInput}
+              placeholder="목표 이름"
+              placeholderTextColor={Colors.textHint}
+              value={title}
+              onChangeText={setTitle}
+            />
+
+            {/* 목표 금액 */}
+            <View style={styles.modalAmountRow}>
+              <Text style={styles.modalAmountPrefix}>₩</Text>
+              <TextInput
+                style={styles.modalAmountInput}
+                placeholder="목표 금액"
+                placeholderTextColor={Colors.textHint}
+                value={amount}
+                onChangeText={setAmount}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* 타입 선택 */}
+            <View style={styles.typeRow}>
+              {GOAL_TYPES.map(type => (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.typeButton, selectedType === type && styles.typeButtonActive]}
+                  onPress={() => setSelectedType(type)}
+                >
+                  <Text style={[styles.typeText, selectedType === type && styles.typeTextActive]}>
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* 기한 */}
+            {Platform.OS === 'web' ? (
+              // @ts-ignore
+              <input
+                type="date"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: `1px solid ${Colors.border}`,
+                  fontSize: '15px',
+                  color: deadline ? Colors.textDark : Colors.textHint,
+                  backgroundColor: Colors.bgMain,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+                value={deadline}
+                onChange={(e: any) => setDeadline(e.target.value)}
+              />
+            ) : (
+              <TouchableOpacity style={styles.dateButton}>
+                <Text style={[styles.dateText, !deadline && { color: Colors.textHint }]}>
+                  {deadline || '기한 선택'}
+                </Text>
+                <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+              </TouchableOpacity>
+            )}
+
+            {/* 저장 버튼 */}
+            <TouchableOpacity style={styles.modalSaveBtn} onPress={handleAddGoal}>
+              <Text style={styles.modalSaveBtnText}>목표 생성</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 목표 수정 모달 */}
+      <GoalEditModal
+        visible={editingGoal !== null}
+        goal={editingGoal}
+        onSave={handleSaveEdit}
+        onClose={() => setEditingGoal(null)}
+      />
     </View>
   );
 }

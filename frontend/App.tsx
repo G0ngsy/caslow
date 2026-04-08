@@ -14,21 +14,36 @@ import ExpenseFormScreen from './src/screens/ExpenseFormScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingScreen from './src/screens/SettingScreen';
-import { Colors } from './src/constants/colors';
 import TabBar from './src/components/TabBar';
 import GoalScreen from './src/screens/GoalScreen';
 
 const Tab = createBottomTabNavigator();
 const ExpenseStack = createNativeStackNavigator();
+const RootStack = createNativeStackNavigator();
 
 // 지출 스택 네비게이터
-// ExpenseScreen (선택화면) → ExpenseFormScreen (입력폼)
 function ExpenseStackNavigator() {
   return (
     <ExpenseStack.Navigator screenOptions={{ headerShown: false }}>
       <ExpenseStack.Screen name="ExpenseSelect" component={ExpenseScreen} />
       <ExpenseStack.Screen name="ExpenseForm" component={ExpenseFormScreen} />
     </ExpenseStack.Navigator>
+  );
+}
+
+// 탭 네비게이터
+function TabNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="홈" component={HomeScreen} />
+      <Tab.Screen name="분석" component={AnalysisScreen} />
+      <Tab.Screen name="입력" component={ExpenseStackNavigator} />
+      <Tab.Screen name="목표" component={GoalScreen} />
+      <Tab.Screen name="설정" component={SettingScreen} />
+    </Tab.Navigator>
   );
 }
 
@@ -62,18 +77,10 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Tab.Navigator
-  tabBar={(props) => <TabBar {...props} />}
-  screenOptions={() => ({
-    headerShown: false,
-  })}
->
-  <Tab.Screen name="홈" component={HomeScreen} />
-  <Tab.Screen name="분석" component={AnalysisScreen} />
-  <Tab.Screen name="입력" component={ExpenseStackNavigator} />
-  <Tab.Screen name="목표" component={GoalScreen} />
-  <Tab.Screen name="설정" component={SettingScreen} />
-</Tab.Navigator>
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Screen name="Tabs" component={TabNavigator} />
+        <RootStack.Screen name="Chat" component={ChatScreen} />
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 }
