@@ -12,9 +12,9 @@ import { getGoals, createGoal, deleteGoal, updateGoal } from '../lib/api';
 
 // 달성률에 따른 프로그레스 바 색상
 function getProgressColor(percent: number): string {
-  if (percent < 34) return '#DE525E';   // 빨강 (0~33%)
-  if (percent < 67) return '#E3C170';   // 골드 (34~66%)
-  return '#255DAA';                      // 블루 (67~100%)
+  if (percent < 34) return '#6E6E6D';   //  (0~33%)
+  if (percent < 67) return '#E3C170';   //  (34~66%)
+  return '#DE525E';                      //  (67~100%)
 }
 
 function formatAmount(amount: number): string {
@@ -23,7 +23,7 @@ function formatAmount(amount: number): string {
 
 function getAiAdvice(goal: Goal, percent: number): string {
   const typeAdvice: Record<string, string> = {
-    '저축': '매달 고정 저축액을 설정하고 자동이체를 활용하면 효과적입니다.',
+    '저축': '매달 정기 저축액을 설정하고 자동이체를 활용하면 효과적입니다.',
     '투자': '분산 투자로 리스크를 줄이고, 장기적 관점으로 접근하세요.',
     '비상금': '생활비 3~6개월치를 목표로 하는 것이 좋습니다.',
     '여행': '항공·숙박·식비로 나눠 세부 계획을 세우면 절약에 도움이 됩니다.',
