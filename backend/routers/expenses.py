@@ -4,6 +4,8 @@
 from fastapi import APIRouter, HTTPException, Header
 from database import supabase, get_supabase_with_token
 from models.expense import ExpenseCreate, ExpenseUpdate
+from datetime import date, datetime
+from collections import defaultdict
 
 # 라우터 생성 - /expenses 경로로 시작하는 API들을 모아요
 router = APIRouter(prefix="/expenses", tags=["expenses"])
@@ -113,3 +115,53 @@ def delete_expense(expense_id: str, authorization: str = Header(...)):
         raise HTTPException(status_code=404, detail="지출 항목을 찾을 수 없습니다.")
 
     return {"message": "삭제되었습니다."}
+
+# ✅ 카테고리별 지출 합계 (GET /expenses/analysis/category)
+@router.get("/analysis/category")
+def get_expenses_by_category(authorization: str = Header(...)):
+    """이번 달 카테고리별 지출 합계 반환"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 이번 달 첫째 날
+    today = date.today()
+    first_day = today.replace(day=1)
+
+    response = authed_supabase.table("expenses") \
+        .select("category, amount") \
+        .eq("user_id", user_id) \
+        .gte("date", str(first_day)) \
+        .execute()
+
+    # 카테고리별 합산
+    category_totals = defaultdict(int)
+    for expense in response.data:
+        category_totals[expense["category"]] += expense["amount"]
+
+    return [{"category": k, "amount": v} for k, v in category_totals.items()]
+
+
+# ✅ 월별 지출 합계 (GET /expenses/analysis/monthly)
+@router.get("/analysis/monthly")
+def get_expenses_by_month(authorization: str = Header(...)):
+    """최근 6개월 월별 지출 합계 반환"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("expenses") \
+        .select("date, amount") \
+        .eq("user_id", user_id) \
+        .execute()
+
+    # 월별 합산
+    monthly_totals = defaultdict(int)
+    for expense in response.data:
+        month = expense["date"][:7]  # "2026-04" 형식
+        monthly_totals[month] += expense["amount"]
+
+    # 최근 6개월 정렬
+    sorted_months = sorted(monthly_totals.items())[-6:]
+
+    return [{"month": k, "amount": v} for k, v in sorted_months]

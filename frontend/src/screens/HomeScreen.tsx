@@ -8,15 +8,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
-// 임시 더미 데이터
-const dummyExpenses = [
-  { id: '1', title: '스타벅스', category: 'cafe', amount: 5500, date: '2026-04-06' },
-  { id: '2', title: '올리브영', category: 'shopping', amount: 32000, date: '2026-04-06' },
-  { id: '3', title: '버거킹', category: 'food', amount: 12000, date: '2026-04-05' },
-  { id: '4', title: '지하철', category: 'transport', amount: 1400, date: '2026-04-05' },
-  { id: '5', title: '넷플릭스', category: 'subscription', amount: 17000, date: '2026-04-05' },
-];
-
 // 카테고리별 아이콘 및 색상
 const categoryConfig: Record<string, { icon: string; color: string }> = {
   cafe:         { icon: 'cafe',                color: '#A78BFA' },

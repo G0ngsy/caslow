@@ -1,15 +1,15 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Platform, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../constants/colors';
+import { Colors } from '../../constants/colors';
 
 export const GOAL_TYPES = ['저축', '투자', '비상금', '여행', '교육', '기타'];
 
 export type Goal = {
   id: string;
   title: string;
-  targetAmount: number;
-  currentAmount: number;
+  target_amount: number;
+  current_amount: number;
   type: string;
   deadline: string;
   color: string;
@@ -32,8 +32,8 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
   useEffect(() => {
     if (goal) {
       setTitle(goal.title);
-      setTargetAmount(goal.targetAmount.toString());
-      setCurrentAmount(goal.currentAmount.toString());
+      setTargetAmount(goal.target_amount.toString());
+      setCurrentAmount(goal.current_amount.toString());
       setSelectedType(goal.type);
       setDeadline(goal.deadline);
     }
@@ -44,8 +44,8 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
     onSave({
       ...goal,
       title,
-      targetAmount: parseInt(targetAmount) || 0,
-      currentAmount: parseInt(currentAmount) || 0,
+      target_amount: parseInt(targetAmount) || 0,
+      current_amount: parseInt(currentAmount) || 0,
       type: selectedType,
       deadline,
     });
