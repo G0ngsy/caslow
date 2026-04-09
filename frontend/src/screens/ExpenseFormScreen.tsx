@@ -5,6 +5,8 @@ import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import Button from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
+import { createExpense } from '../lib/api';
+
 
 // 카테고리 목록
 const categories = [
@@ -157,10 +159,35 @@ export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormSc
   // AI 카테고리 추천 (나중에 실제 API 연동)
   const aiSuggestedCategory = 'cafe';
 
-  // 저장 함수 (나중에 API 연동)
-  const handleSave = () => {
-    console.log('저장:', { amount, selectedCategory, date, memo });
-  };
+  
+  // 저장 함수
+const handleSave = async () => {
+  // 금액 입력 확인
+  if (!amount) {
+    window.alert('금액을 입력해주세요.');
+    return;
+  }
+  // 카테고리 선택 확인
+  if (!selectedCategory) {
+    window.alert('카테고리를 선택해주세요.');
+    return;
+  }
+
+  try {
+    // 백엔드 API 호출
+    await createExpense({
+      amount: parseInt(amount),
+      category: selectedCategory,
+      memo: memo || undefined,
+      date: date,
+    });
+    window.alert('저장되었습니다!');
+    navigation.goBack();  // 저장 후 이전 화면으로 이동
+  } catch (error) {
+    console.error('저장 실패:', error);
+    window.alert('저장에 실패했습니다.');
+  }
+};
 
   return (
     <View style={styles.container}>
