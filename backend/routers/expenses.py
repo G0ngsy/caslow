@@ -94,6 +94,21 @@ def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str =
 
     return response.data[0]
 
+# ✅ 메모 기준 지출 삭제 (DELETE /expenses/by-memo)
+@router.delete("/by-memo")
+def delete_expenses_by_memo(memo: str, authorization: str = Header(...)):
+    """메모에 특정 텍스트가 포함된 지출 삭제 (정기 지출 삭제 시 사용)"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("expenses") \
+        .delete() \
+        .eq("user_id", user_id) \
+        .like("memo", f"%{memo}%") \
+        .execute()
+
+    return {"message": "삭제되었습니다.", "count": len(response.data)}
 
 # ✅ 지출 삭제 (DELETE /expenses/{id})
 @router.delete("/{expense_id}")
@@ -117,27 +132,45 @@ def delete_expense(expense_id: str, authorization: str = Header(...)):
     return {"message": "삭제되었습니다."}
 
 # ✅ 카테고리별 지출 합계 (GET /expenses/analysis/category)
+# ✅ 카테고리별 지출 합계 (탭 필터 포함)
 @router.get("/analysis/category")
-def get_expenses_by_category(authorization: str = Header(...)):
-    """이번 달 카테고리별 지출 합계 반환"""
+def get_expenses_by_category(
+    authorization: str = Header(...),
+    tab: str = "all"  # all / fixed / variable
+):
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
     authed_supabase = get_supabase_with_token(token)
 
-    # 이번 달 첫째 날
     today = date.today()
     first_day = today.replace(day=1)
 
-    response = authed_supabase.table("expenses") \
-        .select("category, amount") \
+    query = authed_supabase.table("expenses") \
+        .select("category, amount, memo") \
         .eq("user_id", user_id) \
-        .gte("date", str(first_day)) \
-        .execute()
+        .gte("date", str(first_day))
 
-    # 카테고리별 합산
+    # 탭 필터 적용
+    if tab == "fixed":
+        # 정기 지출만 (메모에 [정기] 포함)
+        query = query.like("memo", "%[정기]%")
+    elif tab == "variable":
+        # 변동 지출만 (메모에 [정기] 없는 것)
+        query = query.not_.like("memo", "%[정기]%")
+
+    response = query.execute()
+
+    # 한글 카테고리명 → 영문 키 정규화
+    korean_to_key = {
+        '카페': 'cafe', '음식': 'food', '교통': 'transport',
+        '쇼핑': 'shopping', '구독': 'subscription', '기타': 'etc',
+    }
+
     category_totals = defaultdict(int)
     for expense in response.data:
-        category_totals[expense["category"]] += expense["amount"]
+        raw = expense["category"]
+        key = korean_to_key.get(raw, raw)  # 한글이면 영문 키로, 아니면 그대로
+        category_totals[key] += expense["amount"]
 
     return [{"category": k, "amount": v} for k, v in category_totals.items()]
 
@@ -165,3 +198,4 @@ def get_expenses_by_month(authorization: str = Header(...)):
     sorted_months = sorted(monthly_totals.items())[-6:]
 
     return [{"month": k, "amount": v} for k, v in sorted_months]
+

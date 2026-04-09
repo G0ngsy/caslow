@@ -67,10 +67,10 @@ export async function deleteExpense(id: string) {
   return response.json();
 }
 
-// 이번 달 카테고리별 지출 합계 조회
-export async function getExpensesByCategory() {
+// 카테고리별 지출 합계 조회 (탭 필터 포함)
+export async function getExpensesByCategory(tab: 'all' | 'fixed' | 'variable' = 'all') {
   const headers = await getAuthHeader();
-  const response = await fetch(`${BASE_URL}/expenses/analysis/category`, { headers });
+  const response = await fetch(`${BASE_URL}/expenses/analysis/category?tab=${tab}`, { headers });
   if (!response.ok) throw new Error('카테고리별 지출을 불러오지 못했습니다.');
   return response.json();
 }
@@ -206,5 +206,16 @@ export async function deleteRecurringExpense(id: string) {
     headers,
   });
   if (!response.ok) throw new Error('정기 지출 삭제에 실패했습니다.');
+  return response.json();
+}
+
+// 정기 지출 관련 expenses 삭제 (메모에 [정기] 포함된 것)
+export async function deleteExpensesByMemo(memo: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/expenses/by-memo?memo=${encodeURIComponent(memo)}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) throw new Error('지출 삭제에 실패했습니다.');
   return response.json();
 }

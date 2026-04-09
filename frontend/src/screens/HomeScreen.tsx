@@ -9,24 +9,30 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 
 // 카테고리별 아이콘 및 색상
-const categoryConfig: Record<string, { icon: string; color: string }> = {
-  cafe:         { icon: 'cafe',                color: '#A78BFA' },
-  food:         { icon: 'restaurant',          color: '#F59E0B' },
-  transport:    { icon: 'bus',                 color: '#3B82F6' },
-  shopping:     { icon: 'bag',                 color: '#EC4899' },
-  subscription: { icon: 'tv',                  color: '#10B981' },
-  default:      { icon: 'card',                color: '#6B7280' },
+const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
+  cafe:         { icon: 'cafe',                color: '#A78BFA', label: '카페' },
+  food:         { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
+  transport:    { icon: 'bus',                 color: '#3B82F6', label: '교통' },
+  shopping:     { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
+  subscription: { icon: 'tv',                  color: '#10B981', label: '구독' },
+  '카페':       { icon: 'cafe',                color: '#A78BFA', label: '카페' },
+  '음식':       { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
+  '교통':       { icon: 'bus',                 color: '#3B82F6', label: '교통' },
+  '쇼핑':       { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
+  '구독':       { icon: 'tv',                  color: '#10B981', label: '구독' },
+  '기타':       { icon: 'ellipsis-horizontal', color: '#6B7280', label: '기타' },
+  default:      { icon: 'card',                color: '#6B7280', label: '기타' },
 };
 
 // 카테고리 필터 목록
 const categories = [
-  { key: 'all',          label: '전체', icon: 'apps' },
-  { key: 'cafe',         label: '카페', icon: 'cafe' },
-  { key: 'food',         label: '음식', icon: 'restaurant' },
-  { key: 'transport',    label: '교통', icon: 'bus' },
-  { key: 'shopping',     label: '쇼핑', icon: 'bag' },
-  { key: 'subscription', label: '구독', icon: 'tv' },
-  { key: 'etc',          label: '기타', icon: 'ellipsis-horizontal' },
+  { key: 'all',  label: '전체', icon: 'apps' },
+  { key: '카페', label: '카페', icon: 'cafe' },
+  { key: '음식', label: '음식', icon: 'restaurant' },
+  { key: '교통', label: '교통', icon: 'bus' },
+  { key: '쇼핑', label: '쇼핑', icon: 'bag' },
+  { key: '구독', label: '구독', icon: 'tv' },
+  { key: '기타', label: '기타', icon: 'ellipsis-horizontal' },
 ];
 
 // 재테크 명언 목록
@@ -52,7 +58,9 @@ function formatAmount(amount: number): string {
 
 // 오늘/지난 구분 함수
 function getDateLabel(dateStr: string): string {
-  const today = new Date().toISOString().split('T')[0];
+  // 한국 시간 기준 오늘 날짜
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   if (dateStr === today) return '오늘';
   return '지난';
 }
@@ -587,11 +595,14 @@ useFocusEffect(
                   <View style={{ flex: 1 }}>
                     <View style={styles.expenseTitleRow}>
                       <Text style={styles.expenseTitle}>{expense.title}</Text>
-                      <View style={[styles.categoryBadge, { backgroundColor: config.color + '22' }]}>
-                        <Text style={[styles.categoryBadgeText, { color: config.color }]}>
-                          {categories.find(c => c.key === expense.category)?.label || '기타'}
-                        </Text>
-                      </View>
+                      {/* 카테고리 뱃지 */}
+                        <View style={[styles.categoryBadge, { backgroundColor: config.color + '22' }]}>
+                          <Text style={[styles.categoryBadgeText, { color: config.color }]}>
+                            {categories.find(c => c.key === expense.category)?.label 
+                              || categoryConfig[expense.category]?.label 
+                              || expense.category}
+                          </Text>
+                        </View>
                     </View>
                     <Text style={styles.expenseDate}>{expense.date}</Text>
                   </View>

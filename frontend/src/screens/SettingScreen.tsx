@@ -11,7 +11,7 @@ import LogoutConfirmModal from './modals/LogoutConfirmModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import {
-  getCategories, createCategory, deleteCategory,
+  getCategories, createCategory, deleteCategory,deleteExpensesByMemo,
   getRecurringExpenses, createRecurringExpense, deleteRecurringExpense,createExpense
 } from '../lib/api';
 
@@ -116,9 +116,13 @@ export default function SettingScreen() {
 
     // 2. 이번 달 결제일 기준으로 expenses 테이블에 추가
     const now = new Date();
-    const expenseDate = new Date(now.getFullYear(), now.getMonth(), item.day);
-    // 결제일이 아직 안 됐으면 이번 달, 이미 지났거나 오늘이면 이번 달 날짜 그대로 사용
-    const dateStr = expenseDate.toISOString().split('T')[0];
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(item.day).padStart(2, '0');
+
+    // 한국 시간 기준 날짜 직접 계산 (toISOString은 UTC라 날짜 틀릴 수 있음)
+    const dateStr = `${year}-${month}-${day}`;
+
     await createExpense({
       amount: item.amount,
       category: item.category,
@@ -135,16 +139,26 @@ export default function SettingScreen() {
 
   // 정기 지출 삭제 확인
   const handleConfirmDeleteRecurring = async () => {
-    if (!deleteRecurringId) return;
-    try {
-      await deleteRecurringExpense(deleteRecurringId);
-      fetchRecurring();
-      setDeleteRecurringId(null);
-    } catch (error) {
-      console.error('정기 지출 삭제 실패:', error);
-      window.alert('삭제에 실패했습니다.');
+  if (!deleteRecurringId) return;
+  try {
+    // 삭제할 정기 지출 찾기
+    const item = recurringItems.find(i => i.id === deleteRecurringId);
+    
+    // 1. recurring_expenses 테이블에서 삭제
+    await deleteRecurringExpense(deleteRecurringId);
+    
+    // 2. expenses 테이블에서도 관련 지출 삭제
+    if (item) {
+      await deleteExpensesByMemo(`[정기] ${item.title}`);
     }
-  };
+    
+    fetchRecurring();
+    setDeleteRecurringId(null);
+  } catch (error) {
+    console.error('정기 지출 삭제 실패:', error);
+    window.alert('삭제에 실패했습니다.');
+  }
+};
 
   // 카테고리 추가
   const handleAddCategory = async (name: string, color: string) => {
