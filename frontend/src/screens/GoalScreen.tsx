@@ -1,31 +1,21 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform,ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
-import GoalEditModal, { Goal, GOAL_TYPES } from './GoalEditModal';
+import GoalEditModal, { Goal, GOAL_TYPES } from './modals/GoalEditModal';
+import DeleteConfirmModal from './modals/DeleteConfirmModal';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { getGoals, createGoal, deleteGoal, updateGoal } from '../lib/api';
 
-// 더미 데이터
-const dummyGoals: Goal[] = [
-  {
-    id: '1',
-    title: '비상금 마련',
-    targetAmount: 1000000,
-    currentAmount: 350000,
-    type: '비상금',
-    deadline: '2026-12-31',
-    color: '#255DAA',
-  },
-  {
-    id: '2',
-    title: '여행 자금',
-    targetAmount: 500000,
-    currentAmount: 120000,
-    type: '여행',
-    deadline: '2026-08-01',
-    color: '#10B981',
-  },
-];
+
+// 달성률에 따른 프로그레스 바 색상
+function getProgressColor(percent: number): string {
+  if (percent < 34) return '#DE525E';   // 빨강 (0~33%)
+  if (percent < 67) return '#E3C170';   // 골드 (34~66%)
+  return '#255DAA';                      // 블루 (67~100%)
+}
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString('ko-KR');
@@ -329,52 +319,120 @@ const styles = StyleSheet.create({
 });
 
 export default function GoalScreen() {
-  const [goals, setGoals] = useState<Goal[]>(dummyGoals);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
-
-  // 새 목표 모달
+  // 목표 목록 상태
+  const [goals, setGoals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [selectedType, setSelectedType] = useState('저축');
   const [deadline, setDeadline] = useState('');
+  // 수정 중인 목표
+  const [editingGoal, setEditingGoal] = useState<any>(null);
+  // 확장된 목표 ID (AI 조언 표시)
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  // 삭제 확인 모달
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
-  const resetModal = () => {
-    setTitle('');
-    setAmount('');
-    setSelectedType('저축');
-    setDeadline('');
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    resetModal();
-  };
-
-  const handleAddGoal = () => {
-    if (!title || !amount) return;
-    const newGoal: Goal = {
-      id: Date.now().toString(),
-      title,
-      targetAmount: parseInt(amount),
-      currentAmount: 0,
-      type: selectedType,
-      deadline,
-      color: Colors.primary,
-    };
-    setGoals(prev => [...prev, newGoal]);
-    handleCloseModal();
-  };
-
-  const handleSaveEdit = (updated: Goal) => {
-    setGoals(prev => prev.map(g => g.id === updated.id ? updated : g));
-    setEditingGoal(null);
-  };
-
+  // 목표 카드 클릭 시 확장/축소
   const toggleExpand = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);
   };
+
+  // 모달 닫기 + 초기화
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setTitle('');
+    setAmount('');
+    setDeadline('');
+    setSelectedType('저축');
+  };
+
+  // 목표 수정 저장
+const handleSaveEdit = async (updatedGoal: any) => {
+  try {
+    await updateGoal(updatedGoal.id, {
+      title: updatedGoal.title,
+      target_amount: updatedGoal.target_amount,
+      current_amount: updatedGoal.current_amount,
+      type: updatedGoal.type,
+      deadline: updatedGoal.deadline,
+    });
+    fetchGoals();
+    setEditingGoal(null);
+  } catch (error) {
+    console.error('목표 수정 실패:', error);
+    window.alert('수정에 실패했습니다.');
+  }
+};
+
+  // 화면 포커스될 때마다 목표 목록 불러오기
+  useFocusEffect(
+    useCallback(() => {
+      fetchGoals();
+    }, [])
+  );
+
+  // 목표 목록 불러오기
+  const fetchGoals = async () => {
+    setLoading(true);
+    try {
+      const data = await getGoals();
+      setGoals(data);
+    } catch (error) {
+      console.error('목표 불러오기 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 목표 추가
+  const handleAddGoal = async () => {
+    if (!title || !amount) {
+      window.alert('이름과 금액을 입력해주세요.');
+      return;
+    }
+    try {
+      await createGoal({
+        title,
+        target_amount: parseInt(amount),
+        type: selectedType,
+        deadline: deadline || '',
+      });
+      handleCloseModal();
+      fetchGoals();
+    } catch (error) {
+      console.error('목표 추가 실패:', error);
+      window.alert('목표 추가에 실패했습니다.');
+    }
+  };
+
+  // 목표 삭제 확인
+  const handleDeleteGoal = (id: string) => {
+    setDeleteTargetId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+    try {
+      await deleteGoal(deleteTargetId);
+      fetchGoals();
+    } catch (error) {
+      console.error('목표 삭제 실패:', error);
+      window.alert('삭제에 실패했습니다.');
+    } finally {
+      setDeleteTargetId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -392,7 +450,7 @@ export default function GoalScreen() {
           </View>
         ) : (
           goals.map(goal => {
-            const percent = Math.round((goal.currentAmount / goal.targetAmount) * 100);
+            const percent = Math.round((goal.current_amount / goal.target_amount) * 100);
             const isExpanded = expandedId === goal.id;
 
             return (
@@ -405,16 +463,27 @@ export default function GoalScreen() {
                 {/* 헤더 */}
                 <View style={styles.goalHeader}>
                   <View style={styles.goalTitleRow}>
-                    <View style={[styles.goalDot, { backgroundColor: goal.color }]} />
+                    <View style={[styles.goalDot, { backgroundColor: goal.color || Colors.primary }]} />
                     <Text style={styles.goalTitle}>{goal.title}</Text>
                   </View>
                   <View style={styles.goalHeaderRight}>
+                    {/* 수정 버튼 */}
                     <TouchableOpacity
                       style={styles.editBtn}
                       onPress={() => setEditingGoal(goal)}
                     >
                       <Ionicons name="create-outline" size={16} color={Colors.primary} />
                     </TouchableOpacity>
+
+                    {/* 삭제 버튼 */}
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => handleDeleteGoal(goal.id)}
+                    >
+                      <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                    </TouchableOpacity>
+
+                    {/* 타입 뱃지 */}
                     <View style={styles.goalTypeBadge}>
                       <Text style={styles.goalTypeText}>{goal.type}</Text>
                     </View>
@@ -422,24 +491,26 @@ export default function GoalScreen() {
                 </View>
 
                 {/* 금액 */}
-                <View style={styles.goalAmountRow}>
-                  <Text style={styles.goalCurrentAmount}>₩{formatAmount(goal.currentAmount)}</Text>
-                  <Text style={styles.goalTargetAmount}>₩{formatAmount(goal.targetAmount)}</Text>
-                </View>
+                  <View style={styles.goalAmountRow}>
+                    <Text style={styles.goalCurrentAmount}>₩{formatAmount(goal.current_amount)}</Text>
+                    <Text style={styles.goalTargetAmount}>₩{formatAmount(goal.target_amount)}</Text>
+                  </View>
 
-                {/* 프로그레스 바 */}
-                <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, {
-                    width: `${Math.min(percent, 100)}%`,
-                    backgroundColor: goal.color,
-                  }]} />
-                </View>
+                  {/* 프로그레스 바 */}
+                  <View style={styles.progressBar}>
+                    <View style={[styles.progressFill, {
+                      width: `${Math.min(percent, 100)}%`,
+                      backgroundColor: getProgressColor(percent),  // 색상 함수 적용
+                    }]} />
+                  </View>
 
-                {/* 푸터 */}
-                <View style={styles.goalFooter}>
-                  <Text style={styles.goalPercent}>달성률 {percent}%</Text>
-                  <Text style={styles.goalDeadline}>기한: {goal.deadline}</Text>
-                </View>
+                  {/* 푸터 */}
+                  <View style={styles.goalFooter}>
+                    <Text style={[styles.goalPercent, { color: getProgressColor(percent) }]}>
+                      달성률 {percent}%
+                    </Text>
+                    <Text style={styles.goalDeadline}>기한: {goal.deadline}</Text>
+                  </View>
 
                 {/* AI 조언 (확장 시) */}
                 {isExpanded && (
@@ -553,6 +624,14 @@ export default function GoalScreen() {
         goal={editingGoal}
         onSave={handleSaveEdit}
         onClose={() => setEditingGoal(null)}
+      />
+
+      {/* 목표 삭제 확인 모달 */}
+      <DeleteConfirmModal
+        visible={deleteTargetId !== null}
+        message="목표를 삭제하시겠습니까?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
       />
     </View>
   );

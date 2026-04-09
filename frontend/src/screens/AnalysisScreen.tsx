@@ -1,9 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { PieChart, LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import { useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+import { getExpensesByCategory, getExpensesByMonth } from '../lib/api';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+
 
 const screenWidth = Dimensions.get('window').width;
 const Y_AXIS_WIDTH = 36;
@@ -11,34 +15,87 @@ const END_SPACING = 8;
 // 카드 margin(16*2) + padding(20*2) + yAxis + endSpacing 모두 제외
 const lineChartWidth = screenWidth - 32 - 40 - Y_AXIS_WIDTH - END_SPACING;
 
-// 더미 데이터
-const categoryData = [
-  { name: '쇼핑',  amount: 32000, color: '#EC4899' },
-  { name: '음식',  amount: 12000, color: '#F59E0B' },
-  { name: '카페',  amount: 5500,  color: '#A78BFA' },
-  { name: '구독',  amount: 17000, color: '#10B981' },
-  { name: '교통',  amount: 1400,  color: '#3B82F6' },
-];
+// 카테고리 색상 매핑
+const categoryColors: Record<string, string> = {
+  cafe:         '#A78BFA',
+  food:         '#F59E0B',
+  transport:    '#3B82F6',
+  shopping:     '#EC4899',
+  subscription: '#10B981',
+  etc:          '#6B7280',
+};
 
-const monthlyRaw = [
-  { month: '11월', amount: 65000 },
-  { month: '12월', amount: 85000 },
-  { month: '1월',  amount: 50000 },
-  { month: '2월',  amount: 55000 },
-  { month: '3월',  amount: 45000 },
-  { month: '4월',  amount: 67900 },
-];
+// 카테고리 한글명 매핑
+const categoryLabels: Record<string, string> = {
+  cafe:         '카페',
+  food:         '음식',
+  transport:    '교통',
+  shopping:     '쇼핑',
+  subscription: '구독',
+  etc:          '기타',
+};
 
-const totalAmount = categoryData.reduce((sum, c) => sum + c.amount, 0);
+// 월 표시 형식 변환 (2026-04 → 4월)
+function formatMonth(month: string): string {
+  const m = parseInt(month.split('-')[1]);
+  return `${m}월`;
+}
 
+// 금액 포맷 함수
 function formatAmount(amount: number): string {
   return amount.toLocaleString('ko-KR');
 }
 
 
+
 export default function AnalysisScreen() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<{ month: string; amount: number } | null>(null);
+  const [categoryData, setCategoryData] = useState<any[]>([]);
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 화면 포커스될 때마다 데이터 새로 불러오기
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 카테고리별 + 월별 데이터 동시 호출
+      const [categoryRes, monthlyRes] = await Promise.all([
+        getExpensesByCategory(),
+        getExpensesByMonth(),
+      ]);
+
+      // 카테고리 데이터 변환
+      const formattedCategory = categoryRes.map((item: any) => ({
+        name: categoryLabels[item.category] || item.category,
+        amount: item.amount,
+        color: categoryColors[item.category] || '#6B7280',
+        key: item.category,
+      }));
+      setCategoryData(formattedCategory);
+
+      // 월별 데이터 변환
+      const formattedMonthly = monthlyRes.map((item: any) => ({
+        month: formatMonth(item.month),
+        amount: item.amount,
+      }));
+      setMonthlyData(formattedMonthly);
+
+    } catch (error) {
+      console.error('분석 데이터 불러오기 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 총 지출 계산
+  const totalAmount = categoryData.reduce((sum, c) => sum + c.amount, 0);
 
   // gifted-charts PieChart용 데이터
   const pieData = categoryData.map((cat, i) => ({
@@ -49,14 +106,22 @@ export default function AnalysisScreen() {
   }));
 
   // gifted-charts LineChart용 데이터
-  const lineData = monthlyRaw.map(item => ({
+  const lineData = monthlyData.map(item => ({
     value: item.amount,
     label: item.month,
   }));
 
-  const maxBar = Math.max(...monthlyRaw.map(d => d.amount));
+  const maxBar = Math.max(...monthlyData.map((d: any) => d.amount), 0);
   const maxValue = maxBar > 0 ? Math.ceil(maxBar * 1.3 / 10000) * 10000 : 90000;
   const selected = selectedIndex !== null ? categoryData[selectedIndex] : null;
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

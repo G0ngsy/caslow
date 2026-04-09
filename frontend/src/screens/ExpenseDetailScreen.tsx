@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
 import { updateExpense, deleteExpense } from '../lib/api';
+import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
 // 카테고리별 아이콘 및 색상
 const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
@@ -150,19 +151,17 @@ const styles = StyleSheet.create({
 export default function ExpenseDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
   // 홈 화면에서 전달받은 지출 데이터
   const { expense } = route.params;
   const config = categoryConfig[expense.category] || { icon: 'card', color: '#6B7280', label: '기타' };
 
   // 삭제 함수
-  const handleDelete = async () => {
-    const confirmed = window.confirm('정말 삭제하시겠습니까?');
-    if (!confirmed) return;
-
+  const handleConfirmDelete = async () => {
     try {
       await deleteExpense(expense.id);
-      window.alert('삭제되었습니다.');
+      setDeleteModalVisible(false);
       navigation.goBack();
     } catch (error) {
       console.error('삭제 실패:', error);
@@ -220,12 +219,19 @@ export default function ExpenseDetailScreen() {
             <Text style={styles.editButtonText}>수정</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <TouchableOpacity style={styles.deleteButton} onPress={() => setDeleteModalVisible(true)}>
             <Ionicons name="trash-outline" size={16} color={Colors.danger} />
             <Text style={styles.deleteButtonText}>삭제</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      <DeleteConfirmModal
+        visible={deleteModalVisible}
+        message="지출 내역을 삭제하시겠습니까?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalVisible(false)}
+      />
     </View>
   );
 }

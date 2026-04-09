@@ -25,28 +25,28 @@ export default function RecurringModal({ visible, categories, onAdd, onClose }: 
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // 선택된 카테고리가 목록에 없으면 첫번째로 리셋
-  const selectedCategory = categories.find((c) => c.label === category) ? category : (categories[0]?.label ?? '');
+  const selectedCategory = categories.find((c) => c.name === category) ? category : (categories[0]?.name ?? '');
 
   const handleAdd = () => {
-    const num = parseInt(amount.replace(/,/g, ''), 10);
-    const dayNum = parseInt(day, 10);
-    if (!name.trim() || isNaN(num) || num <= 0 || isNaN(dayNum) || dayNum < 1 || dayNum > 31) return;
+  const num = parseInt(amount.replace(/,/g, ''), 10);
+  const dayNum = parseInt(day, 10);
+  if (!name.trim() || isNaN(num) || num <= 0 || isNaN(dayNum) || dayNum < 1 || dayNum > 31) return;
 
-    onAdd({
-      id: Date.now().toString(),
-      name: name.trim(),
-      amount: num,
-      category: selectedCategory,
-      day: dayNum,
-    });
+  // SettingScreen의 handleAddRecurring이 기대하는 형식으로 전달
+  onAdd({
+    id: Date.now().toString(),
+    name: name.trim(),
+    amount: num,
+    category: selectedCategory,
+    day: dayNum,
+  });
 
-    // 입력 초기화 후 닫기
-    setName('');
-    setAmount('');
-    setDay('1');
-    setDropdownOpen(false);
-    onClose();
-  };
+  setName('');
+  setAmount('');
+  setDay('1');
+  setDropdownOpen(false);
+  onClose();
+};
 
   const handleClose = () => {
     setName('');
@@ -115,13 +115,13 @@ export default function RecurringModal({ visible, categories, onAdd, onClose }: 
                 {categories.map((cat) => (
                   <TouchableOpacity
                     key={cat.id}
-                    style={[styles.dropdownItem, cat.label === selectedCategory && styles.dropdownItemSelected]}
-                    onPress={() => { setCategory(cat.label); setDropdownOpen(false); }}
+                    style={[styles.dropdownItem, cat.name === selectedCategory && styles.dropdownItemSelected]}
+                    onPress={() => { setCategory(cat.name); setDropdownOpen(false); }}
                   >
-                    <Text style={[styles.dropdownItemText, cat.label === selectedCategory && styles.dropdownItemTextSelected]}>
-                      {cat.label}
+                    <Text style={[styles.dropdownItemText, cat.name === selectedCategory && styles.dropdownItemTextSelected]}>
+                      {cat.name}
                     </Text>
-                    {cat.label === selectedCategory && <Text style={styles.checkmark}>✓</Text>}
+                    {cat.name === selectedCategory && <Text style={styles.checkmark}>✓</Text>}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
