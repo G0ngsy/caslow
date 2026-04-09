@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import { useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { getExpensesByCategory, getExpensesByMonth } from '../lib/api';
+import { getExpensesByCategory, getExpensesByMonth, getCategories } from '../lib/api';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 
@@ -54,30 +54,46 @@ export default function AnalysisScreen() {
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  // 전체 / 변동 / 정기 탭 선택 상태
+  const [expenseTab, setExpenseTab] = useState<'all' | 'variable' | 'fixed'>('all');
 
+  // 탭에 따라 카테고리 데이터 필터링
+  // [정기] 메모가 있으면 정기 지출, 없으면 변동 지출
+  const filteredCategoryData = categoryData; // API에서 받은 데이터 그대로 사용
+  // 탭 필터는 API 레벨에서 처리해야 정확해요
+  
   // 화면 포커스될 때마다 데이터 새로 불러오기
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [])
+    }, [expenseTab])
   );
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      // 카테고리별 + 월별 데이터 동시 호출
-      const [categoryRes, monthlyRes] = await Promise.all([
-        getExpensesByCategory(),
-        getExpensesByMonth(),
-      ]);
+  setLoading(true);
+  try {
+    const [categoryRes, monthlyRes, categoriesRes] = await Promise.all([
+      getExpensesByCategory(expenseTab),
+      getExpensesByMonth(),
+      getCategories(),
+    ]);
+
+      // DB 카테고리 이름 → 색상 맵 (한글 이름 기준)
+      const colorByName: Record<string, string> = {};
+      for (const cat of categoriesRes) {
+        colorByName[cat.name] = cat.color;
+      }
 
       // 카테고리 데이터 변환
-      const formattedCategory = categoryRes.map((item: any) => ({
-        name: categoryLabels[item.category] || item.category,
-        amount: item.amount,
-        color: categoryColors[item.category] || '#6B7280',
-        key: item.category,
-      }));
+      const formattedCategory = categoryRes.map((item: any) => {
+        const label = categoryLabels[item.category] || item.category;
+        const color =
+          categoryColors[item.category] ||   // 영문 키로 먼저 시도
+          colorByName[item.category] ||       // 한글 이름으로 시도
+          colorByName[label] ||              // 변환된 한글 이름으로 시도
+          '#6B7280';
+        return { name: label, amount: item.amount, color, key: item.category };
+      });
       setCategoryData(formattedCategory);
 
       // 월별 데이터 변환
@@ -133,11 +149,42 @@ export default function AnalysisScreen() {
 
         {/* 카테고리별 지출 - 도넛 차트 */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>카테고리별 지출</Text>
+          {/* 제목 + 탭 필터 */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <Text style={styles.cardTitle}>카테고리별 지출</Text>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              {[
+                { key: 'all',      label: '전체' },
+                { key: 'variable', label: '변동 지출' },
+                { key: 'fixed',    label: '정기 지출' },
+              ].map(tab => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: expenseTab === tab.key ? Colors.primary : Colors.border,
+                    backgroundColor: expenseTab === tab.key ? Colors.primary : Colors.bgCard,
+                  }}
+                  onPress={() => setExpenseTab(tab.key as any)}
+                >
+                  <Text style={{
+                    color: expenseTab === tab.key ? Colors.white : '#437CA1',
+                    fontSize: 12,
+                    fontWeight: expenseTab === tab.key ? 'bold' : 'normal',
+                  }}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
           <Text style={styles.totalLabel}>총 지출 ₩{formatAmount(totalAmount)}</Text>
 
-          <View style={styles.donutRow}>
             {/* 도넛 차트 */}
+            <View style={{ alignItems: 'center', marginVertical: 12 }}>
             <PieChart
               data={pieData}
               donut
@@ -160,13 +207,16 @@ export default function AnalysisScreen() {
                     <>
                       <Text style={styles.donutCenterHint}>총 지출</Text>
                       <Text style={styles.donutCenterTotal}>
-                        {Math.round(totalAmount / 10000)}만원
+                        {totalAmount >= 10000
+                          ? `${(totalAmount / 10000).toFixed(totalAmount % 10000 === 0 ? 0 : 1)}만원`
+                          : `₩${formatAmount(totalAmount)}`}
                       </Text>
                     </>
                   )}
                 </View>
               )}
             />
+            </View>
 
             {/* 카테고리 목록 */}
             <View style={styles.categoryList}>
@@ -190,7 +240,6 @@ export default function AnalysisScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
         </View>
 
         {/* 월별 지출 추이 - 라인 차트 */}
@@ -275,7 +324,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 24,
     borderWidth: 1,
     borderColor: Colors.border,
     elevation: 6,
