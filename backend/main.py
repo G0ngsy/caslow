@@ -21,8 +21,8 @@ app = FastAPI(lifespan=lifespan)
 # 프론트엔드에서 백엔드 API 호출할 수 있게 허용
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 모든 도메인 허용 (개발 중)
-    allow_credentials=True,
+    allow_origins=["*"],  # 개발 중 전체 허용
+    allow_credentials=False,  # True → False
     allow_methods=["*"],
     allow_headers=["*"],
 )

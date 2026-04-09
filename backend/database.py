@@ -5,13 +5,19 @@ import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-# .env 파일 로드
 load_dotenv()
 
-# 환경변수에서 Supabase 정보 가져오기
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-# Supabase 클라이언트 생성
-# 앱 전체에서 이 supabase 객체를 사용해요
+# 기본 클라이언트 (anon key)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+def get_supabase_with_token(token: str) -> Client:
+    """
+    유저 토큰으로 인증된 Supabase 클라이언트 반환
+    RLS 정책을 통과하기 위해 유저 토큰 필요
+    """
+    client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    client.auth.set_session(token, token)
+    return client

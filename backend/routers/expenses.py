@@ -2,8 +2,7 @@
 # CRUD = Create(생성), Read(조회), Update(수정), Delete(삭제)
 
 from fastapi import APIRouter, HTTPException, Header
-from typing import Optional
-from database import supabase
+from database import supabase, get_supabase_with_token
 from models.expense import ExpenseCreate, ExpenseUpdate
 
 # 라우터 생성 - /expenses 경로로 시작하는 API들을 모아요
@@ -28,13 +27,17 @@ def get_user_id(authorization: str) -> str:
 def get_expenses(authorization: str = Header(...)):
     """로그인한 사용자의 지출 목록을 날짜 최신순으로 반환"""
     user_id = get_user_id(authorization)
-    
-    response = supabase.table("expenses") \
+    token = authorization.replace("Bearer ", "")
+
+    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("expenses") \
         .select("*") \
         .eq("user_id", user_id) \
         .order("date", desc=True) \
         .execute()
-    
+
     return response.data
 
 
@@ -43,7 +46,11 @@ def get_expenses(authorization: str = Header(...)):
 def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
     """새로운 지출 항목을 추가"""
     user_id = get_user_id(authorization)
-    
+    token = authorization.replace("Bearer ", "")
+
+    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
+    authed_supabase = get_supabase_with_token(token)
+
     # 저장할 데이터 준비
     data = {
         "user_id": user_id,
@@ -52,8 +59,8 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
         "memo": expense.memo,
         "date": str(expense.date),
     }
-    
-    response = supabase.table("expenses").insert(data).execute()
+
+    response = authed_supabase.table("expenses").insert(data).execute()
     return response.data[0]
 
 
@@ -62,23 +69,27 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
 def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str = Header(...)):
     """특정 지출 항목 수정"""
     user_id = get_user_id(authorization)
-    
+    token = authorization.replace("Bearer ", "")
+
+    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
+    authed_supabase = get_supabase_with_token(token)
+
     # None이 아닌 값만 업데이트
     data = {k: v for k, v in expense.dict().items() if v is not None}
-    
+
     # date는 문자열로 변환
     if "date" in data:
         data["date"] = str(data["date"])
-    
-    response = supabase.table("expenses") \
+
+    response = authed_supabase.table("expenses") \
         .update(data) \
         .eq("id", expense_id) \
         .eq("user_id", user_id) \
         .execute()
-    
+
     if not response.data:
         raise HTTPException(status_code=404, detail="지출 항목을 찾을 수 없습니다.")
-    
+
     return response.data[0]
 
 
@@ -87,14 +98,18 @@ def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str =
 def delete_expense(expense_id: str, authorization: str = Header(...)):
     """특정 지출 항목 삭제"""
     user_id = get_user_id(authorization)
-    
-    response = supabase.table("expenses") \
+    token = authorization.replace("Bearer ", "")
+
+    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("expenses") \
         .delete() \
         .eq("id", expense_id) \
         .eq("user_id", user_id) \
         .execute()
-    
+
     if not response.data:
         raise HTTPException(status_code=404, detail="지출 항목을 찾을 수 없습니다.")
-    
+
     return {"message": "삭제되었습니다."}

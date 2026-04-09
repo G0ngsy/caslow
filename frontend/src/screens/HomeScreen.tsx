@@ -1,8 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,ActivityIndicator  } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
+import { getExpenses } from '../lib/api';
+import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // 임시 더미 데이터
 const dummyExpenses = [
@@ -380,34 +384,72 @@ dropdownRow: {
 });
 
 export default function HomeScreen() {
+  // 카테고리 필터 선택 상태 (기본값: 전체)
   const [selectedCategory, setSelectedCategory] = useState('all');
+  // 정렬 순서 상태 (최신순/과거순)
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  // 정렬 드롭다운 표시 여부
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+  // 백엔드에서 불러온 지출 목록
+  const [expenses, setExpenses] = useState<any[]>([]);
+  // 데이터 로딩 중 여부
+  const [loadingData, setLoadingData] = useState(false);
+  const navigation = useNavigation<any>();
 
-  // 임시 예산 (나중에 설정에서 입력받을 예정)
+  // 화면 포커스될 때마다 지출 목록 새로 불러오기
+// 지출 추가/수정/삭제 후 돌아올 때 자동 갱신
+useFocusEffect(
+  useCallback(() => {
+    fetchExpenses();
+  }, [])
+);
+
+  // 백엔드 API에서 지출 목록 가져오는 함수
+  const fetchExpenses = async () => {
+    setLoadingData(true);
+    try {
+      const data = await getExpenses();
+      setExpenses(data);
+    } catch (error) {
+      console.error('지출 불러오기 실패:', error);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  // 임시 예산 (나중에 설정 화면에서 입력받을 예정)
   const budget = 500000;
 
-  // 카테고리 필터 적용
+  // 선택된 카테고리로 지출 필터링
   const filteredExpenses = selectedCategory === 'all'
-    ? dummyExpenses
-    : dummyExpenses.filter(e => e.category === selectedCategory);
+    ? expenses
+    : expenses.filter((e: any) => e.category === selectedCategory);
 
-  // 정렬 적용
+  // 최신순/과거순으로 정렬
   const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     if (sortOrder === 'newest') return b.date.localeCompare(a.date);
     return a.date.localeCompare(b.date);
   });
 
-  // 총 지출 계산
-  const totalAmount = dummyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  // 이번 달 총 지출 계산
+  const totalAmount = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
-  // 날짜별 그룹화
-  const grouped: Record<string, typeof dummyExpenses> = {};
+  // 오늘/지난으로 날짜별 그룹화
+  const grouped: Record<string, any[]> = {};
   sortedExpenses.forEach(e => {
     const label = getDateLabel(e.date);
     if (!grouped[label]) grouped[label] = [];
     grouped[label].push(e);
   });
+
+  // 로딩 중일 때 스피너 표시
+  if (loadingData) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -431,7 +473,7 @@ export default function HomeScreen() {
             <Text style={styles.summaryMonth}>4월</Text>
           </View>
           <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
-          <Text style={styles.summaryCount}>{dummyExpenses.length}건의 지출</Text>
+          <Text style={styles.summaryCount}>{expenses.length}건의 지출</Text>
           <View style={styles.progressSection}>
             <View style={styles.progressLabelRow}>
               <Text style={styles.progressLabel}>예산 대비</Text>
@@ -542,7 +584,12 @@ export default function HomeScreen() {
             {items.map(expense => {
               const config = categoryConfig[expense.category] || categoryConfig.default;
               return (
-                <View key={expense.id} style={styles.expenseItem}>
+                
+                <TouchableOpacity
+                  key={expense.id}
+                  style={styles.expenseItem}
+                  onPress={() => navigation.navigate('ExpenseDetail', { expense })}
+                >
                   <View style={[styles.iconBox, { backgroundColor: config.color + '22' }]}>
                     <Ionicons name={config.icon as any} size={22} color={config.color} />
                   </View>
@@ -558,7 +605,7 @@ export default function HomeScreen() {
                     <Text style={styles.expenseDate}>{expense.date}</Text>
                   </View>
                   <Text style={styles.expenseAmount}>-₩{formatAmount(expense.amount)}</Text>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>
