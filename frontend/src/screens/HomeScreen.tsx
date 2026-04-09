@@ -1,9 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,ActivityIndicator  } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import { getExpenses } from '../lib/api';
+import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 // 임시 더미 데이터
 const dummyExpenses = [
@@ -391,11 +394,15 @@ export default function HomeScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
   // 데이터 로딩 중 여부
   const [loadingData, setLoadingData] = useState(false);
+  const navigation = useNavigation<any>();
 
-  // 컴포넌트 마운트 시 지출 목록 불러오기
-  useEffect(() => {
+  // 화면 포커스될 때마다 지출 목록 새로 불러오기
+// 지출 추가/수정/삭제 후 돌아올 때 자동 갱신
+useFocusEffect(
+  useCallback(() => {
     fetchExpenses();
-  }, []);
+  }, [])
+);
 
   // 백엔드 API에서 지출 목록 가져오는 함수
   const fetchExpenses = async () => {
@@ -466,7 +473,7 @@ export default function HomeScreen() {
             <Text style={styles.summaryMonth}>4월</Text>
           </View>
           <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
-          <Text style={styles.summaryCount}>{dummyExpenses.length}건의 지출</Text>
+          <Text style={styles.summaryCount}>{expenses.length}건의 지출</Text>
           <View style={styles.progressSection}>
             <View style={styles.progressLabelRow}>
               <Text style={styles.progressLabel}>예산 대비</Text>
@@ -577,7 +584,12 @@ export default function HomeScreen() {
             {items.map(expense => {
               const config = categoryConfig[expense.category] || categoryConfig.default;
               return (
-                <View key={expense.id} style={styles.expenseItem}>
+                
+                <TouchableOpacity
+                  key={expense.id}
+                  style={styles.expenseItem}
+                  onPress={() => navigation.navigate('ExpenseDetail', { expense })}
+                >
                   <View style={[styles.iconBox, { backgroundColor: config.color + '22' }]}>
                     <Ionicons name={config.icon as any} size={22} color={config.color} />
                   </View>
@@ -593,7 +605,7 @@ export default function HomeScreen() {
                     <Text style={styles.expenseDate}>{expense.date}</Text>
                   </View>
                   <Text style={styles.expenseAmount}>-₩{formatAmount(expense.amount)}</Text>
-                </View>
+                </TouchableOpacity>
               );
             })}
           </View>

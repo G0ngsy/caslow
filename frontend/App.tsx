@@ -4,13 +4,13 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import SplashScreen from './src/screens/SplashScreen';
-import { getExpenses } from '../frontend/src/lib/api';
 import { supabase } from './src/lib/supabase';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import ExpenseScreen from './src/screens/ExpenseScreen';
 import ExpenseFormScreen from './src/screens/ExpenseFormScreen';
+import ExpenseDetailScreen from './src/screens/ExpenseDetailScreen';
 import AnalysisScreen from './src/screens/AnalysisScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import SettingScreen from './src/screens/SettingScreen';
@@ -19,9 +19,22 @@ import GoalScreen from './src/screens/GoalScreen';
 
 const Tab = createBottomTabNavigator();
 const ExpenseStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
 const RootStack = createNativeStackNavigator();
 
+// 홈 스택 네비게이터
+// HomeScreen → ExpenseDetailScreen
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="ExpenseDetail" component={ExpenseDetailScreen} />
+    </HomeStack.Navigator>
+  );
+}
+
 // 지출 스택 네비게이터
+// ExpenseScreen → ExpenseFormScreen
 function ExpenseStackNavigator() {
   return (
     <ExpenseStack.Navigator screenOptions={{ headerShown: false }}>
@@ -38,7 +51,7 @@ function TabNavigator() {
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tab.Screen name="홈" component={HomeScreen} />
+      <Tab.Screen name="홈" component={HomeStackNavigator} />
       <Tab.Screen name="분석" component={AnalysisScreen} />
       <Tab.Screen name="입력" component={ExpenseStackNavigator} />
       <Tab.Screen name="목표" component={GoalScreen} />
