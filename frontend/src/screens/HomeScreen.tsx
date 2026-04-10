@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
-import { getExpenses } from '../lib/api';
+import { getExpenses, getBudget  } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -395,13 +395,26 @@ export default function HomeScreen() {
   const [loadingData, setLoadingData] = useState(false);
   const navigation = useNavigation<any>();
 
+  const [budget, setBudget] = useState(0);
+
   // 화면 포커스될 때마다 지출 목록 새로 불러오기
 // 지출 추가/수정/삭제 후 돌아올 때 자동 갱신
 useFocusEffect(
   useCallback(() => {
     fetchExpenses();
+    fetchBudget();
   }, [])
 );
+
+// 예산 불러오기
+const fetchBudget = async () => {
+  try {
+    const data = await getBudget();
+    setBudget(data.amount);
+  } catch (error) {
+    console.error('예산 불러오기 실패:', error);
+  }
+};
 
   // 백엔드 API에서 지출 목록 가져오는 함수
   const fetchExpenses = async () => {
@@ -416,8 +429,6 @@ useFocusEffect(
     }
   };
 
-  // 임시 예산 (나중에 설정 화면에서 입력받을 예정)
-  const budget = 500000;
 
   // 선택된 카테고리로 지출 필터링
   const filteredExpenses = selectedCategory === 'all'

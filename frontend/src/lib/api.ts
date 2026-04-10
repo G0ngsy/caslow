@@ -219,3 +219,23 @@ export async function deleteExpensesByMemo(memo: string) {
   if (!response.ok) throw new Error('지출 삭제에 실패했습니다.');
   return response.json();
 }
+
+// 월 예산 조회
+export async function getBudget() {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/budget/`, { headers });
+  if (!response.ok) throw new Error('예산을 불러오지 못했습니다.');
+  return response.json();
+}
+
+// 월 예산 저장
+export async function saveBudget(amount: number) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/budget/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ amount }),
+  });
+  if (!response.ok) throw new Error('예산 저장에 실패했습니다.');
+  return response.json();
+}

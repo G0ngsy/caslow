@@ -11,7 +11,7 @@ import LogoutConfirmModal from './modals/LogoutConfirmModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import {
-  getCategories, createCategory, deleteCategory,deleteExpensesByMemo,
+  getCategories, createCategory, deleteCategory,deleteExpensesByMemo,getBudget, saveBudget,
   getRecurringExpenses, createRecurringExpense, deleteRecurringExpense,createExpense
 } from '../lib/api';
 
@@ -39,8 +39,7 @@ function getIcon(name: string): string {
 }
 
 export default function SettingScreen() {
-  // 월 예산 상태
-  const [budget, setBudget] = useState(500000);
+
   // 카테고리 목록 상태
   const [categories, setCategories] = useState<any[]>([]);
   // 정기 지출 목록 상태
@@ -51,6 +50,8 @@ export default function SettingScreen() {
   const [recurringModalVisible, setRecurringModalVisible] = useState(false);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  // 예산 상태 (기본값 500000)
+  const [budget, setBudget] = useState(0);
 
   // 삭제할 정기 지출 ID (null이면 모달 닫힘)
   const [deleteRecurringId, setDeleteRecurringId] = useState<string | null>(null);
@@ -60,8 +61,30 @@ export default function SettingScreen() {
     useCallback(() => {
       fetchCategories();
       fetchRecurring();
+      fetchBudget();
     }, [])
   );
+
+  // 예산 불러오기
+const fetchBudget = async () => {
+  try {
+    const data = await getBudget();
+    setBudget(data.amount);
+  } catch (error) {
+    console.error('예산 불러오기 실패:', error);
+  }
+};
+
+// 예산 저장
+const handleSaveBudget = async (amount: number) => {
+  try {
+    await saveBudget(amount);
+    setBudget(amount);
+  } catch (error) {
+    console.error('예산 저장 실패:', error);
+    window.alert('예산 저장에 실패했습니다.');
+  }
+};
 
   // 카테고리 목록 불러오기
   // 카테고리가 없으면 기본 6개 자동 생성
@@ -282,7 +305,7 @@ export default function SettingScreen() {
       <BudgetModal
         visible={budgetModalVisible}
         currentBudget={budget}
-        onSave={setBudget}
+        onSave={handleSaveBudget}  // setBudget → handleSaveBudget
         onClose={() => setBudgetModalVisible(false)}
       />
 
