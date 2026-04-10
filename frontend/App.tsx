@@ -48,9 +48,10 @@ function ExpenseStackNavigator() {
 function TabNavigator() {
   return (
     <Tab.Navigator
-      tabBar={(props) => <TabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
+        tabBar={(props) => <TabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+        
+      >
       <Tab.Screen name="홈" component={HomeStackNavigator} />
       <Tab.Screen name="분석" component={AnalysisScreen} />
       <Tab.Screen name="입력" component={ExpenseStackNavigator} />

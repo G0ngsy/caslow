@@ -186,13 +186,13 @@ const handleSaveBudget = async (amount: number) => {
 
   // 카테고리 추가
   const handleAddCategory = async (name: string, color: string) => {
-    try {
-      await createCategory({ name, color });
-      fetchCategories();
-    } catch (error) {
-      console.error('카테고리 추가 실패:', error);
-    }
-  };
+  try {
+    await createCategory({ name, color });
+    fetchCategories();  // 이게 실행되면 categories 업데이트됨
+  } catch (error) {
+    console.error('카테고리 추가 실패:', error);
+  }
+};
 
   // 카테고리 삭제
   const handleDeleteCategory = async (id: string) => {
