@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import { useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { getExpensesByCategory, getExpensesByMonth, getCategories } from '../lib/api';
+import { getExpensesByCategory, getExpensesByMonth, getCategories, getAiInsight } from '../lib/api';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
 
 
@@ -56,7 +56,9 @@ export default function AnalysisScreen() {
   const [loading, setLoading] = useState(false);
   // 전체 / 변동 / 정기 탭 선택 상태
   const [expenseTab, setExpenseTab] = useState<'all' | 'variable' | 'fixed'>('all');
-
+  // AI 인사이트 상태
+  const [aiInsight, setAiInsight] = useState('');
+  const [insightLoading, setInsightLoading] = useState(false);
   // 탭에 따라 카테고리 데이터 필터링
   // [정기] 메모가 있으면 정기 지출, 없으면 변동 지출
   const filteredCategoryData = categoryData; // API에서 받은 데이터 그대로 사용
@@ -78,37 +80,41 @@ export default function AnalysisScreen() {
       getCategories(),
     ]);
 
-      // DB 카테고리 이름 → 색상 맵 (한글 이름 기준)
-      const colorByName: Record<string, string> = {};
-      for (const cat of categoriesRes) {
-        colorByName[cat.name] = cat.color;
-      }
+    // 카테고리 데이터 변환
+    const formattedCategory = categoryRes.map((item: any) => ({
+      name: categoryLabels[item.category] || item.category,
+      amount: item.amount,
+      color: categoryColors[item.category] || '#6B7280',
+      key: item.category,
+    }));
+    setCategoryData(formattedCategory);
 
-      // 카테고리 데이터 변환
-      const formattedCategory = categoryRes.map((item: any) => {
-        const label = categoryLabels[item.category] || item.category;
-        const color =
-          categoryColors[item.category] ||   // 영문 키로 먼저 시도
-          colorByName[item.category] ||       // 한글 이름으로 시도
-          colorByName[label] ||              // 변환된 한글 이름으로 시도
-          '#6B7280';
-        return { name: label, amount: item.amount, color, key: item.category };
-      });
-      setCategoryData(formattedCategory);
+    // 월별 데이터 변환
+    const formattedMonthly = monthlyRes.map((item: any) => ({
+      month: formatMonth(item.month),
+      amount: item.amount,
+    }));
+    setMonthlyData(formattedMonthly);
 
-      // 월별 데이터 변환
-      const formattedMonthly = monthlyRes.map((item: any) => ({
-        month: formatMonth(item.month),
-        amount: item.amount,
-      }));
-      setMonthlyData(formattedMonthly);
+  } catch (error) {
+    console.error('분석 데이터 불러오기 실패:', error);
+  } finally {
+    setLoading(false);
+  }
 
-    } catch (error) {
-      console.error('분석 데이터 불러오기 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // AI 인사이트는 별도로 불러오기 (시간이 걸려서 따로 처리)
+  try {
+    const insight = await getAiInsight();
+    setAiInsight(insight.insight);
+  } catch (error) {
+    console.error('AI 인사이트 불러오기 실패:', error);
+    setAiInsight('AI 인사이트를 불러오지 못했습니다.');
+  } finally {
+    setInsightLoading(false);
+  }
+};
+
+     
 
   // 총 지출 계산
   const totalAmount = categoryData.reduce((sum, c) => sum + c.amount, 0);
@@ -297,17 +303,20 @@ export default function AnalysisScreen() {
         </View>
 
         {/* AI 인사이트 */}
-        <View style={styles.aiCard}>
-          <View style={styles.aiHeader}>
-            <Ionicons name="bulb-outline" size={18} color={Colors.primary} />
-            <Text style={styles.aiTitle}>AI 인사이트</Text>
+          <View style={styles.aiCard}>
+            <View style={styles.aiHeader}>
+              <Ionicons name="bulb-outline" size={18} color={Colors.primary} />
+              <Text style={styles.aiTitle}>AI 인사이트</Text>
+            </View>
+            {insightLoading ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ActivityIndicator size="small" color={Colors.primary} />
+                <Text style={styles.aiText}>AI가 분석 중이에요...</Text>
+              </View>
+            ) : (
+              <Text style={styles.aiText}>{aiInsight}</Text>
+            )}
           </View>
-          <Text style={styles.aiText}>
-            이번 달 총 지출이 ₩{formatAmount(totalAmount)}으로 나타났습니다.
-            쇼핑과 구독 서비스 비용이 전체의 {Math.round(((32000 + 17000) / totalAmount) * 100)}%를 차지하고 있어요.
-            불필요한 구독 서비스를 점검하고 쇼핑 지출을 줄이면 절약에 도움이 될 것 같아요.
-          </Text>
-        </View>
 
       </ScrollView>
     </View>

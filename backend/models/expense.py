@@ -4,7 +4,7 @@
 
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date as date_type
 
 # 지출 생성할 때 받는 데이터 형식
 class ExpenseCreate(BaseModel):
@@ -12,7 +12,7 @@ class ExpenseCreate(BaseModel):
     amount: int          # 금액
     category: str        # 카테고리
     memo: Optional[str] = None  # 메모 (선택사항)
-    date: date           # 날짜
+    date: date_type      # 날짜
 
 # 지출 수정할 때 받는 데이터 형식
 class ExpenseUpdate(BaseModel):
@@ -20,7 +20,7 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[int] = None
     category: Optional[str] = None
     memo: Optional[str] = None
-    date: Optional[date] = None
+    date: Optional[date_type] = None
 
 # 지출 조회할 때 반환하는 데이터 형식
 class ExpenseResponse(BaseModel):
@@ -29,5 +29,5 @@ class ExpenseResponse(BaseModel):
     amount: int          # 금액
     category: str        # 카테고리
     memo: Optional[str] = None  # 메모
-    date: date           # 날짜
+    date: date_type      # 날짜
     created_at: str      # 생성일시
