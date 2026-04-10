@@ -8,13 +8,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgHeader,    // #1B1E3E
     borderTopWidth: 1,
     borderTopColor: '#255DAA',
-    height: 64,
+    height: 70,
     alignItems: 'center',
+    paddingBottom: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     height: '100%',
   },
   tabLabel: {
@@ -29,7 +30,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,    // #255DAA
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 4,
     borderWidth: 3,
     borderColor: Colors.bgMain,         // #E3F2FF
     shadowColor: Colors.primary,
@@ -37,6 +38,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 8,
+    marginTop: -20,
   },
 });
 
@@ -57,17 +59,23 @@ export default function TabBar({ state, descriptors, navigation }: any) {
         const isCenter = tab?.isCenter;
 
         const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+        const event = navigation.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
 
-        if (isCenter) {
+        if (!event.defaultPrevented) {
+          // 다른 탭에서 누를 때 → 해당 탭 첫 화면으로 이동
+          // 같은 탭에서 누를 때 → 스택 리셋
+          navigation.reset({
+            index: 0,
+            routes: [{ name: route.name }],
+          });
+        }
+      };
+
+       if (isCenter) {
           return (
             <TouchableOpacity
               key={route.key}
@@ -77,6 +85,13 @@ export default function TabBar({ state, descriptors, navigation }: any) {
               <View style={styles.centerButton}>
                 <Ionicons name="add" size={32} color={Colors.white} />
               </View>
+              {/* 지출입력 메뉴명 */}
+              <Text style={[
+                styles.tabLabel,
+                { color: isFocused ? Colors.accentLight : '#437CA1' }
+              ]}>
+                지출입력
+              </Text>
             </TouchableOpacity>
           );
         }

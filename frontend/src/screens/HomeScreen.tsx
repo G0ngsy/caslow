@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
-import { getExpenses, getBudget  } from '../lib/api';
+import { getExpenses, getBudget , getCategories  } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -25,15 +25,18 @@ const categoryConfig: Record<string, { icon: string; color: string; label: strin
 };
 
 // 카테고리 필터 목록
-const categories = [
-  { key: 'all',  label: '전체', icon: 'apps' },
-  { key: '카페', label: '카페', icon: 'cafe' },
-  { key: '음식', label: '음식', icon: 'restaurant' },
-  { key: '교통', label: '교통', icon: 'bus' },
-  { key: '쇼핑', label: '쇼핑', icon: 'bag' },
-  { key: '구독', label: '구독', icon: 'tv' },
-  { key: '기타', label: '기타', icon: 'ellipsis-horizontal' },
-];
+// 카테고리 이름으로 아이콘 반환
+function getCategoryIcon(name: string): string {
+  const map: Record<string, string> = {
+    '카페': 'cafe',
+    '음식': 'restaurant',
+    '교통': 'bus',
+    '쇼핑': 'bag',
+    '구독': 'tv',
+    '기타': 'ellipsis-horizontal',
+  };
+  return map[name] || 'pricetag';
+}
 
 // 재테크 명언 목록
 const quotes = [
@@ -394,6 +397,10 @@ export default function HomeScreen() {
   // 데이터 로딩 중 여부
   const [loadingData, setLoadingData] = useState(false);
   const navigation = useNavigation<any>();
+  // categories 상태 추가
+  const [categories, setCategories] = useState<any[]>([
+    { key: 'all', label: '전체', icon: 'apps' },
+  ]);
 
   const [budget, setBudget] = useState(0);
 
@@ -403,6 +410,7 @@ useFocusEffect(
   useCallback(() => {
     fetchExpenses();
     fetchBudget();
+    fetchCategories();
   }, [])
 );
 
@@ -413,6 +421,25 @@ const fetchBudget = async () => {
     setBudget(data.amount);
   } catch (error) {
     console.error('예산 불러오기 실패:', error);
+  }
+};
+
+// 카테고리 불러오기
+const fetchCategories = async () => {
+  try {
+    const data = await getCategories();
+    const categoryList = [
+      { key: 'all', label: '전체', icon: 'apps' },
+      ...data.map((cat: any) => ({
+        key: cat.name,
+        label: cat.name,
+        icon: getCategoryIcon(cat.name),
+        color: cat.color,
+      }))
+    ];
+    setCategories(categoryList);
+  } catch (error) {
+    console.error('카테고리 불러오기 실패:', error);
   }
 };
 
@@ -428,6 +455,7 @@ const fetchBudget = async () => {
       setLoadingData(false);
     }
   };
+
 
 
   // 선택된 카테고리로 지출 필터링
