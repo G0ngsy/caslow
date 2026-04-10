@@ -268,3 +268,11 @@ export async function sendChatMessage(messages: { role: string; content: string 
   if (!response.ok) throw new Error('AI 응답을 받지 못했습니다.');
   return response.json();
 }
+
+// 분석 화면 AI 인사이트 조회
+export async function getAiInsight() {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/chat/insight`, { headers });
+  if (!response.ok) throw new Error('AI 인사이트를 불러오지 못했습니다.');
+  return response.json();
+}

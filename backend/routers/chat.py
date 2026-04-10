@@ -84,3 +84,52 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
     )
 
     return {"message": response.choices[0].message.content}
+
+# ✅ 분석 화면 AI 인사이트 (GET /chat/insight)
+@router.get("/insight")
+def get_insight(authorization: str = Header(...)):
+    """이번 달 지출 데이터 기반으로 AI 인사이트 생성"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 이번 달 지출 데이터 가져오기
+    from datetime import date
+    today = date.today()
+    first_day = today.replace(day=1)
+
+    expenses = authed_supabase.table("expenses") \
+        .select("title, amount, category, date, memo") \
+        .eq("user_id", user_id) \
+        .gte("date", str(first_day)) \
+        .execute()
+
+    if not expenses.data:
+        return {"insight": "이번 달 지출 내역이 없어요. 지출을 입력하면 AI가 분석해드릴게요! 😊"}
+
+    # 지출 데이터 텍스트로 변환
+    total = sum(e["amount"] for e in expenses.data)
+    expense_text = f"이번 달 총 지출: {total:,}원\n\n지출 내역:\n"
+    for e in expenses.data:
+        expense_text += f"- {e['date']} {e.get('title', '')} ({e['category']}): {e['amount']:,}원\n"
+
+    # Groq API로 인사이트 생성
+    response = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "system",
+                "content": """당신은 재무 분석 AI입니다. 반드시 한국어로만 답변하세요.
+사용자의 이번 달 지출 데이터를 분석해서 2~3줄의 간결한 인사이트를 제공해주세요.
+구체적인 금액과 카테고리를 언급하고, 절약 팁을 한 가지 제안해주세요."""
+            },
+            {
+                "role": "user",
+                "content": f"다음 지출 데이터를 분석해주세요:\n{expense_text}"
+            }
+        ],
+        max_tokens=300,
+        temperature=0.7,
+    )
+
+    return {"insight": response.choices[0].message.content}
