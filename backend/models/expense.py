@@ -8,14 +8,15 @@ from datetime import date
 
 # 지출 생성할 때 받는 데이터 형식
 class ExpenseCreate(BaseModel):
+    title: str           # 지출 이름 (필수)
     amount: int          # 금액
     category: str        # 카테고리
     memo: Optional[str] = None  # 메모 (선택사항)
     date: date           # 날짜
 
 # 지출 수정할 때 받는 데이터 형식
-# 모든 필드가 선택사항 (일부만 수정 가능)
 class ExpenseUpdate(BaseModel):
+    title: Optional[str] = None
     amount: Optional[int] = None
     category: Optional[str] = None
     memo: Optional[str] = None

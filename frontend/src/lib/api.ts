@@ -24,6 +24,7 @@ export async function getExpenses() {
 
 // 지출 추가
 export async function createExpense(data: {
+  title: string;
   amount: number;
   category: string;
   memo?: string;
@@ -217,5 +218,36 @@ export async function deleteExpensesByMemo(memo: string) {
     headers,
   });
   if (!response.ok) throw new Error('지출 삭제에 실패했습니다.');
+  return response.json();
+}
+
+// 정기 지출 제목으로 recurring_expenses 삭제
+export async function deleteRecurringByTitle(title: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/recurring/by-title?title=${encodeURIComponent(title)}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) throw new Error('정기 지출 삭제에 실패했습니다.');
+  return response.json();
+}
+
+// 월 예산 조회
+export async function getBudget() {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/budget/`, { headers });
+  if (!response.ok) throw new Error('예산을 불러오지 못했습니다.');
+  return response.json();
+}
+
+// 월 예산 저장
+export async function saveBudget(amount: number) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/budget/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ amount }),
+  });
+  if (!response.ok) throw new Error('예산 저장에 실패했습니다.');
   return response.json();
 }

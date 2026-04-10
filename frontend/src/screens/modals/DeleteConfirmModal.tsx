@@ -7,6 +7,7 @@ interface DeleteConfirmModalProps {
   message?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  variant?: 'delete' | 'warning';  // 추가
 }
 
 export default function DeleteConfirmModal({
@@ -14,22 +15,36 @@ export default function DeleteConfirmModal({
   message = '정말 삭제하시겠습니까?',
   onConfirm,
   onCancel,
+  variant = 'delete',  // 기본값 delete
 }: DeleteConfirmModalProps) {
+
+  // variant에 따라 색상/아이콘/텍스트 변경
+  const isWarning = variant === 'warning';
+  const iconName = isWarning ? 'warning-outline' : 'trash-outline';
+  const iconColor = isWarning ? '#E3A800' : '#E53935';
+  const iconBg = isWarning ? '#FFF8E1' : '#FDECEA';
+  const confirmBg = isWarning ? '#E3A800' : '#E53935';
+  const confirmLabel = isWarning ? '삭제' : '삭제';
+  const title = isWarning ? '주의' : '삭제 확인';
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onCancel}>
         <TouchableOpacity activeOpacity={1} style={styles.box}>
-          <View style={styles.iconWrap}>
-            <Ionicons name="trash-outline" size={28} color="#E53935" />
+          <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
+            <Ionicons name={iconName as any} size={28} color={iconColor} />
           </View>
-          <Text style={styles.title}>삭제 확인</Text>
+          <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.cancelBtn} onPress={onCancel}>
               <Text style={styles.cancelText}>취소</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmBtn} onPress={onConfirm}>
-              <Text style={styles.confirmText}>삭제</Text>
+            <TouchableOpacity
+              style={[styles.confirmBtn, { backgroundColor: confirmBg }]}
+              onPress={onConfirm}
+            >
+              <Text style={styles.confirmText}>{confirmLabel}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -59,7 +74,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FDECEA',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -100,7 +114,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 13,
     borderRadius: 12,
-    backgroundColor: '#E53935',
     alignItems: 'center',
   },
   confirmText: {

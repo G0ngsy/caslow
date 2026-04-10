@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
-import { updateExpense, deleteExpense } from '../lib/api';
+import { updateExpense, deleteExpense , deleteRecurringByTitle } from '../lib/api';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 
 // 카테고리별 아이콘 및 색상
@@ -160,22 +160,49 @@ export default function ExpenseDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [recurringModalVisible, setRecurringModalVisible] = useState(false);
 
   // 홈 화면에서 전달받은 지출 데이터
   const { expense } = route.params;
   const config = categoryConfig[expense.category] || { icon: 'card', color: '#6B7280', label: '기타' };
 
   // 삭제 함수
-  const handleConfirmDelete = async () => {
-    try {
-      await deleteExpense(expense.id);
-      setDeleteModalVisible(false);
+  // 1단계: 지출 삭제 확인
+const handleConfirmDelete = async () => {
+  try {
+    await deleteExpense(expense.id);
+    setDeleteModalVisible(false);
+
+    // 정기 지출이면 2단계 모달 표시
+    if (expense.memo && expense.memo.includes('[정기]')) {
+      setRecurringModalVisible(true);
+    } else {
       navigation.goBack();
-    } catch (error) {
-      console.error('삭제 실패:', error);
-      window.alert('삭제에 실패했습니다.');
     }
-  };
+  } catch (error) {
+    console.error('삭제 실패:', error);
+    window.alert('삭제에 실패했습니다.');
+  }
+};
+
+// 2단계: 정기 지출도 삭제
+const handleConfirmRecurringDelete = async () => {
+  try {
+    const title = expense.memo.replace('[정기] ', '');
+    await deleteRecurringByTitle(title);
+  } catch (error) {
+    console.error('정기 지출 삭제 실패:', error);
+  } finally {
+    setRecurringModalVisible(false);
+    navigation.goBack();
+  }
+};
+
+// 정기 지출 삭제 안 함
+const handleSkipRecurringDelete = () => {
+  setRecurringModalVisible(false);
+  navigation.goBack();
+};
 
   return (
     <View style={styles.container}>
@@ -234,12 +261,22 @@ export default function ExpenseDetailScreen() {
         </View>
       </ScrollView>
 
-      <DeleteConfirmModal
-        visible={deleteModalVisible}
-        message="지출 내역을 삭제하시겠습니까?"
-        onConfirm={handleConfirmDelete}
-        onCancel={() => setDeleteModalVisible(false)}
-      />
+      {/* 지출 삭제 확인 모달 */}
+        <DeleteConfirmModal
+          visible={deleteModalVisible}
+          message="이 지출을 삭제하시겠습니까?"
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteModalVisible(false)}
+        />
+
+        {/* 정기 지출도 삭제할지 확인 모달 */}
+        <DeleteConfirmModal
+          visible={recurringModalVisible}
+          message="정기 지출 목록에서도 삭제할까요?"
+          variant="warning"
+          onConfirm={handleConfirmRecurringDelete}
+          onCancel={handleSkipRecurringDelete}
+        />
     </View>
   );
 }

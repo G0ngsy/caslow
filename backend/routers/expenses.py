@@ -56,6 +56,7 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
     # 저장할 데이터 준비
     data = {
         "user_id": user_id,
+        "title": expense.title,
         "amount": expense.amount,
         "category": expense.category,
         "memo": expense.memo,
@@ -136,7 +137,7 @@ def delete_expense(expense_id: str, authorization: str = Header(...)):
 @router.get("/analysis/category")
 def get_expenses_by_category(
     authorization: str = Header(...),
-    tab: str = "all"  # all / fixed / variable
+    tab: str = "all"
 ):
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
@@ -145,20 +146,12 @@ def get_expenses_by_category(
     today = date.today()
     first_day = today.replace(day=1)
 
-    query = authed_supabase.table("expenses") \
+    # 전체 데이터 가져오기
+    response = authed_supabase.table("expenses") \
         .select("category, amount, memo") \
         .eq("user_id", user_id) \
-        .gte("date", str(first_day))
-
-    # 탭 필터 적용
-    if tab == "fixed":
-        # 정기 지출만 (메모에 [정기] 포함)
-        query = query.like("memo", "%[정기]%")
-    elif tab == "variable":
-        # 변동 지출만 (메모에 [정기] 없는 것)
-        query = query.not_.like("memo", "%[정기]%")
-
-    response = query.execute()
+        .gte("date", str(first_day)) \
+        .execute()
 
     # 한글 카테고리명 → 영문 키 정규화
     korean_to_key = {
@@ -168,8 +161,16 @@ def get_expenses_by_category(
 
     category_totals = defaultdict(int)
     for expense in response.data:
+        memo = expense.get("memo") or ""
+
+        # 탭 필터 적용
+        if tab == "fixed" and "[정기]" not in memo:
+            continue
+        if tab == "variable" and "[정기]" in memo:
+            continue
+
         raw = expense["category"]
-        key = korean_to_key.get(raw, raw)  # 한글이면 영문 키로, 아니면 그대로
+        key = korean_to_key.get(raw, raw)
         category_totals[key] += expense["amount"]
 
     return [{"category": k, "amount": v} for k, v in category_totals.items()]

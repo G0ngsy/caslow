@@ -53,6 +53,23 @@ def create_recurring(item: RecurringCreate, authorization: str = Header(...)):
     response = authed_supabase.table("recurring_expenses").insert(data).execute()
     return response.data[0]
 
+# ✅ 제목 기준 정기 지출 삭제
+@router.delete("/by-title")
+def delete_recurring_by_title(title: str, authorization: str = Header(...)):
+    """제목으로 정기 지출 삭제"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("recurring_expenses") \
+        .delete() \
+        .eq("user_id", user_id) \
+        .like("title", f"%{title}%") \
+        .execute()
+
+    return {"message": "삭제되었습니다."}
+
+
 # ✅ 정기 지출 삭제
 @router.delete("/{item_id}")
 def delete_recurring(item_id: str, authorization: str = Header(...)):
@@ -70,3 +87,4 @@ def delete_recurring(item_id: str, authorization: str = Header(...)):
         raise HTTPException(status_code=404, detail="정기 지출을 찾을 수 없습니다.")
 
     return {"message": "삭제되었습니다."}
+
