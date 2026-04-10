@@ -1,17 +1,9 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import {  View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform} from 'react-native';
 import { useState, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
+import { sendChatMessage } from '../lib/api';
 
 interface Message {
   id: string;
@@ -209,27 +201,60 @@ export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState('');
   const scrollRef = useRef<ScrollView>(null);
+  // 로딩 상태 추가
+  const [isLoading, setIsLoading] = useState(false);
 
-  function sendMessage(text: string) {
-    const trimmed = text.trim();
-    if (!trimmed) return;
+  async function sendMessage(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed || isLoading) return;
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      text: trimmed,
-    };
+  // 유저 메시지 추가
+  const userMsg: Message = {
+    id: Date.now().toString(),
+    role: 'user',
+    text: trimmed,
+  };
+  setMessages(prev => [...prev, userMsg]);
+  setInput('');
+  setIsLoading(true);
+  setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+  try {
+    // 대화 내역 전체를 API로 전송
+    const history = messages
+      .filter(m => m.id !== '0')  // 초기 메시지 제외
+      .map(m => ({
+        role: m.role === 'ai' ? 'assistant' : 'user',
+        content: m.text,
+      }));
+
+    // 현재 유저 메시지 추가
+    history.push({ role: 'user', content: trimmed });
+
+    // Groq API 호출
+    const response = await sendChatMessage(history);
+
+    // AI 응답 추가
     const aiMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: 'ai',
-      text: '죄송합니다. 현재 AI 연동 준비 중입니다. 곧 답변드릴게요! 😊',
+      text: response.message,
     };
+    setMessages(prev => [...prev, aiMsg]);
 
-    setMessages(prev => [...prev, userMsg, aiMsg]);
-    setInput('');
+  } catch (error) {
+    console.error('AI 응답 실패:', error);
+    const errorMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'ai',
+      text: '죄송합니다. AI 응답에 실패했습니다. 다시 시도해주세요.',
+    };
+    setMessages(prev => [...prev, errorMsg]);
+  } finally {
+    setIsLoading(false);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
-
+}
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -278,6 +303,17 @@ export default function ChatScreen() {
               </View>
             </View>
           )
+        )}
+        {/* 로딩 중 표시 */}
+        {isLoading && (
+          <View style={styles.aiRow}>
+            <View style={styles.aiAvatar}>
+              <Ionicons name="sparkles" size={18} color={Colors.primary} />
+            </View>
+            <View style={styles.aiBubble}>
+              <Text style={styles.aiText}>답변 생성 중... ✨</Text>
+            </View>
+          </View>
         )}
       </ScrollView>
 

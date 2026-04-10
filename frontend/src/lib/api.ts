@@ -256,3 +256,15 @@ export async function saveBudget(amount: number) {
   if (!response.ok) throw new Error('예산 저장에 실패했습니다.');
   return response.json();
 }
+
+// AI 채팅 메시지 전송
+export async function sendChatMessage(messages: { role: string; content: string }[]) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/chat/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ messages }),
+  });
+  if (!response.ok) throw new Error('AI 응답을 받지 못했습니다.');
+  return response.json();
+}
