@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import Button from '../components/Button';
-import { useNavigation } from '@react-navigation/native';
-import { createExpense } from '../lib/api';
+import { useNavigation, useRoute  } from '@react-navigation/native';
+import { createExpense, updateExpense  } from '../lib/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 // 카테고리 목록
@@ -154,24 +154,28 @@ const styles = StyleSheet.create({
 });
 
 export default function ExpenseFormScreen() {
-  // 입력 상태 관리
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+
+  // 수정 모드인지 확인 (expense 데이터가 있으면 수정 모드)
+  const editingExpense = route.params?.expense;
+  const isEditMode = !!editingExpense;
+
+  // 수정 모드면 기존 데이터로 초기화
+  const [title, setTitle] = useState(editingExpense?.title || '');
+  const [amount, setAmount] = useState(editingExpense?.amount?.toString() || '');
+  const [selectedCategory, setSelectedCategory] = useState(editingExpense?.category || '');
   const [date, setDate] = useState(() => {
-    // 한국 시간 기준 오늘 날짜
+    if (editingExpense?.date) return editingExpense.date;
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   });
-  const [memo, setMemo] = useState('');
+  const [memo, setMemo] = useState(editingExpense?.memo || '');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aiSuggestedCategory, setAiSuggestedCategory] = useState('');
 
-  const navigation = useNavigation<any>();
-
   // 저장 함수
   const handleSave = async () => {
-  // 제목 입력 확인
   if (!title) {
     window.alert('제목을 입력해주세요.');
     return;
@@ -186,15 +190,35 @@ export default function ExpenseFormScreen() {
   }
 
   try {
-    await createExpense({
-      title,              // 추가
-      amount: parseInt(amount),
-      category: selectedCategory,
-      memo: memo || undefined,
-      date: date,
-    });
-    window.alert('저장되었습니다!');
-    navigation.goBack();
+    if (isEditMode) {
+      console.log('수정 모드 - 전송 데이터:', {
+        id: editingExpense.id,
+        title,
+        amount: parseInt(amount),
+        category: selectedCategory,
+        memo: memo || undefined,
+        date,
+      });
+      await updateExpense(editingExpense.id, {
+        title,
+        amount: parseInt(amount),
+        category: selectedCategory,
+        memo: memo || undefined,
+        date,
+      });
+      window.alert('수정되었습니다!');
+      navigation.navigate('HomeMain');
+    } else {
+      await createExpense({
+        title,
+        amount: parseInt(amount),
+        category: selectedCategory,
+        memo: memo || undefined,
+        date,
+      });
+      window.alert('저장되었습니다!');
+      navigation.goBack();
+    }
   } catch (error) {
     console.error('저장 실패:', error);
     window.alert('저장에 실패했습니다.');
@@ -203,7 +227,9 @@ export default function ExpenseFormScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="지출 입력" showBack onBack={() => navigation.goBack()} />
+      <Header title={isEditMode ? '지출 수정' : '지출 입력'}
+              showBack
+              onBack={() => navigation.goBack()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -333,7 +359,7 @@ export default function ExpenseFormScreen() {
 
         {/* 저장 버튼 */}
         <View style={styles.saveButton}>
-          <Button title="저장하기" onPress={handleSave} />
+          <Button title={isEditMode ? '수정하기' : '저장하기'} onPress={handleSave} />
         </View>
       </ScrollView>
     </View>

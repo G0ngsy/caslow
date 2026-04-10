@@ -42,6 +42,7 @@ export async function createExpense(data: {
 
 // 지출 수정
 export async function updateExpense(id: string, data: {
+  title?: string; 
   amount?: number;
   category?: string;
   memo?: string;
@@ -53,7 +54,11 @@ export async function updateExpense(id: string, data: {
     headers,
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error('지출 수정에 실패했습니다.');
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('지출 수정 실패 상세:', response.status, errorBody);
+    throw new Error('지출 수정에 실패했습니다.');
+  }
   return response.json();
 }
 
