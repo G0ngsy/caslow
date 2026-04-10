@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import Button from '../components/Button';
 import { useNavigation } from '@react-navigation/native';
 import { createExpense } from '../lib/api';
-
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 // 카테고리 목록
 const categories = [
@@ -18,10 +18,21 @@ const categories = [
   { key: 'etc',          label: '기타',   icon: 'ellipsis-horizontal', color: '#6B7280' },
 ];
 
+// 키워드 기반 카테고리 추천
+function suggestCategory(memo: string): string {
+  const text = memo.toLowerCase();
+  if (text.match(/스타벅스|카페|커피|아메리카노|라떼|이디야|투썸/)) return 'cafe';
+  if (text.match(/밥|식당|마트|편의점|배달|치킨|피자|버거|맥도날드|음식|점심|저녁/)) return 'food';
+  if (text.match(/지하철|버스|택시|카카오택시|기름|주유|ktx|기차/)) return 'transport';
+  if (text.match(/쇼핑|옷|신발|올리브영|다이소|쿠팡|구매/)) return 'shopping';
+  if (text.match(/넷플릭스|유튜브|스포티파이|구독|멤버십/)) return 'subscription';
+  return '';
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgMain,       // #E3F2FF
+    backgroundColor: Colors.bgMain,
   },
   label: {
     color: '#437CA1',
@@ -31,67 +42,69 @@ const styles = StyleSheet.create({
     marginTop: 20,
     letterSpacing: 0.5,
   },
+  // 제목 입력
+  titleInput: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    color: Colors.textDark,
+    fontSize: 15,
+  },
+  // 금액 입력
   amountBox: {
-    backgroundColor: Colors.bgCard,       // #FFFFFF
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.border,           // #ABCCEA
+    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
   },
   amountPrefix: {
-    color: Colors.textDark,               // #1B1E3E
+    color: Colors.textDark,
     fontSize: 24,
     fontWeight: 'bold',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
-    color: Colors.textDark,               // #1B1E3E
+    color: Colors.textDark,
     fontSize: 24,
     fontWeight: 'bold',
   },
-  aiAnalyzing: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 6,
-  marginBottom: 12,
-},
-aiAnalyzingText: {
-  color: Colors.primary,
-  fontSize: 12,
-},
-categoryGrid: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: 10,
-  
-},
-categoryButton: {
-  width: '30%',
-  paddingVertical: 16,
-  backgroundColor: Colors.bgCard,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: Colors.border,
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: 8,
-},
-categoryButtonActive: {
-  borderColor: Colors.primary,
-  borderWidth: 2,
-  backgroundColor: '#D2EEFA',
-},
-categoryText: {
-  color: Colors.textDark,
-  fontSize: 13,
-},
-categoryTextActive: {
-  color: Colors.primary,
-  fontWeight: 'bold',
-},
+  // 카테고리 그리드
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  categoryButton: {
+    width: '30%',
+    paddingVertical: 16,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  categoryButtonActive: {
+    borderColor: Colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#D2EEFA',
+  },
+  categoryText: {
+    color: Colors.textDark,
+    fontSize: 13,
+  },
+  categoryTextActive: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+  },
+  // AI 추천 뱃지
   aiBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -104,30 +117,32 @@ categoryTextActive: {
     marginTop: 8,
   },
   aiBadgeText: {
-    color: Colors.primary,               // #255DAA
+    color: Colors.primary,
     fontSize: 11,
   },
+  // 날짜 버튼
   dateButton: {
-    backgroundColor: Colors.bgCard,      // #FFFFFF
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,          // #ABCCEA
+    borderColor: Colors.border,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   dateText: {
-    color: Colors.textDark,              // #1B1E3E
+    color: Colors.textDark,
     fontSize: 15,
   },
+  // 메모 입력
   memoInput: {
-    backgroundColor: Colors.bgCard,      // #FFFFFF
+    backgroundColor: Colors.bgCard,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,          // #ABCCEA
-    color: Colors.textDark,              // #1B1E3E
+    borderColor: Colors.border,
+    color: Colors.textDark,
     fontSize: 15,
     height: 100,
     textAlignVertical: 'top',
@@ -138,51 +153,48 @@ categoryTextActive: {
   },
 });
 
-interface ExpenseFormScreenProps {
-  // 나중에 OCR 데이터 받을 때 사용
-  initialData?: {
-    amount?: string;
-    category?: string;
-    memo?: string;
-  };
-  onBack?: () => void;
-}
-
-export default function ExpenseFormScreen({ initialData, onBack }: ExpenseFormScreenProps) {
+export default function ExpenseFormScreen() {
   // 입력 상태 관리
-  const [amount, setAmount] = useState(initialData?.amount || '');
-  const [selectedCategory, setSelectedCategory] = useState(initialData?.category || '');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [memo, setMemo] = useState(initialData?.memo || '');
+  const [title, setTitle] = useState('');
+  const [amount, setAmount] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [date, setDate] = useState(() => {
+    // 한국 시간 기준 오늘 날짜
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
+  const [memo, setMemo] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [aiSuggestedCategory, setAiSuggestedCategory] = useState('');
+
   const navigation = useNavigation<any>();
 
-  // AI 카테고리 추천 (나중에 실제 API 연동)
-  const aiSuggestedCategory = 'cafe';
-
-  
   // 저장 함수
-const handleSave = async () => {
-  // 금액 입력 확인
+  const handleSave = async () => {
+  // 제목 입력 확인
+  if (!title) {
+    window.alert('제목을 입력해주세요.');
+    return;
+  }
   if (!amount) {
     window.alert('금액을 입력해주세요.');
     return;
   }
-  // 카테고리 선택 확인
   if (!selectedCategory) {
     window.alert('카테고리를 선택해주세요.');
     return;
   }
 
   try {
-    // 백엔드 API 호출
     await createExpense({
+      title,              // 추가
       amount: parseInt(amount),
       category: selectedCategory,
       memo: memo || undefined,
       date: date,
     });
     window.alert('저장되었습니다!');
-    navigation.goBack();  // 저장 후 이전 화면으로 이동
+    navigation.goBack();
   } catch (error) {
     console.error('저장 실패:', error);
     window.alert('저장에 실패했습니다.');
@@ -191,13 +203,27 @@ const handleSave = async () => {
 
   return (
     <View style={styles.container}>
-      <Header title="지출 입력" showBack 
-      onBack={() => navigation.goBack()}  />
-      
+      <Header title="지출 입력" showBack onBack={() => navigation.goBack()} />
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
       >
+        {/* 제목 입력 - 입력 시 AI 카테고리 추천 */}
+        <Text style={styles.label}>제목</Text>
+        <TextInput
+          style={styles.titleInput}
+          placeholder="지출 제목을 입력해주세요 (예: 스타벅스)"
+          placeholderTextColor="#ABCCEA"
+          value={title}
+          onChangeText={(text) => {
+            setTitle(text);
+            // 제목 입력 시 AI 카테고리 추천
+            const suggested = suggestCategory(text);
+            setAiSuggestedCategory(suggested);
+          }}
+        />
+
         {/* 금액 입력 */}
         <Text style={styles.label}>금액</Text>
         <View style={styles.amountBox}>
@@ -214,15 +240,6 @@ const handleSave = async () => {
 
         {/* 카테고리 선택 */}
         <Text style={styles.label}>카테고리</Text>
-
-        {/* AI 분석 중 표시 */}
-        {aiSuggestedCategory && (
-          <View style={styles.aiAnalyzing}>
-            <Ionicons name="sparkles" size={12} color={Colors.primary} />
-            <Text style={styles.aiAnalyzingText}>AI 카테고리를 분석중...</Text>
-          </View>
-        )}
-
         <View style={styles.categoryGrid}>
           {categories.map(cat => (
             <TouchableOpacity
@@ -236,7 +253,7 @@ const handleSave = async () => {
               <Ionicons
                 name={cat.icon as any}
                 size={28}
-                color={selectedCategory === cat.key ? cat.color : cat.color}
+                color={cat.color}
               />
               <Text style={[
                 styles.categoryText,
@@ -248,7 +265,7 @@ const handleSave = async () => {
           ))}
         </View>
 
-        {/* AI 추천 뱃지 */}
+        {/* AI 추천 뱃지 - 메모 입력 시에만 표시 */}
         {aiSuggestedCategory && (
           <TouchableOpacity
             style={styles.aiBadge}
@@ -256,28 +273,63 @@ const handleSave = async () => {
           >
             <Ionicons name="sparkles" size={12} color={Colors.primary} />
             <Text style={styles.aiBadgeText}>
-              AI 추천: {categories.find(c => c.key === aiSuggestedCategory)?.label}
+              AI 추천: {categories.find(c => c.key === aiSuggestedCategory)?.label} (탭하여 적용)
             </Text>
           </TouchableOpacity>
         )}
 
         {/* 날짜 선택 */}
         <Text style={styles.label}>날짜</Text>
-        <TouchableOpacity style={styles.dateButton}>
-          <Text style={styles.dateText}>{date}</Text>
-          <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
-        </TouchableOpacity>
+        {Platform.OS === 'web' ? (
+            // 웹에서는 텍스트 직접 입력
+            <TextInput
+              style={styles.dateButton}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#ABCCEA"
+            />
+          ) : (
+            // 앱에서는 달력 선택
+            <>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text style={styles.dateText}>{date}</Text>
+                <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+              </TouchableOpacity>
+
+        
+          {/* 날짜 피커 - 앱용 */}
+            {showDatePicker && (
+              <DateTimePicker
+                value={new Date(date)}
+                mode="date"
+                display="default"
+                onChange={(event: any, selectedDate?: Date) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) {
+                    const now = selectedDate;
+                    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    setDate(dateStr);
+                   }
+                  }}
+                />
+              )}
+            </>
+          )}
 
         {/* 메모 입력 */}
-        <Text style={styles.label}>메모 (선택)</Text>
-        <TextInput
-          style={styles.memoInput}
-          placeholder="메모를 입력해주세요"
-          placeholderTextColor="#ABCCEA"
-          value={memo}
-          onChangeText={setMemo}
-          multiline
-        />
+          <Text style={styles.label}>메모 (선택)</Text>
+          <TextInput
+            style={styles.memoInput}
+            placeholder="메모를 입력해주세요"
+            placeholderTextColor="#ABCCEA"
+            value={memo}
+            onChangeText={setMemo}
+            multiline
+          />
 
         {/* 저장 버튼 */}
         <View style={styles.saveButton}>

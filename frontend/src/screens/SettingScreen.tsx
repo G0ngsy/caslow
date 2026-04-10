@@ -147,6 +147,7 @@ const handleSaveBudget = async (amount: number) => {
     const dateStr = `${year}-${month}-${day}`;
 
     await createExpense({
+      title: item.name,
       amount: item.amount,
       category: item.category,
       memo: `[정기] ${item.name}`,
