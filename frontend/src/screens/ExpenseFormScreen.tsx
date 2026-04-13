@@ -157,20 +157,30 @@ export default function ExpenseFormScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
-  // 수정 모드인지 확인 (expense 데이터가 있으면 수정 모드)
+  // 수정 모드 또는 OCR 데이터 확인
   const editingExpense = route.params?.expense;
+  const ocrData = route.params?.ocrData;
   const isEditMode = !!editingExpense;
 
-  // 수정 모드면 기존 데이터로 초기화
-  const [title, setTitle] = useState(editingExpense?.title || '');
-  const [amount, setAmount] = useState(editingExpense?.amount?.toString() || '');
-  const [selectedCategory, setSelectedCategory] = useState(editingExpense?.category || '');
+  // 초기값 설정 (수정 모드 > OCR 데이터 > 기본값)
+  const [title, setTitle] = useState(
+    editingExpense?.title || ocrData?.title || ''
+  );
+  const [amount, setAmount] = useState(
+    editingExpense?.amount?.toString() || ocrData?.amount?.toString() || ''
+  );
+  const [selectedCategory, setSelectedCategory] = useState(
+    editingExpense?.category || ocrData?.category || ''
+  );
   const [date, setDate] = useState(() => {
     if (editingExpense?.date) return editingExpense.date;
+    if (ocrData?.date) return ocrData.date;
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   });
-  const [memo, setMemo] = useState(editingExpense?.memo || '');
+  const [memo, setMemo] = useState(
+    editingExpense?.memo || ocrData?.memo || ''
+  );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aiSuggestedCategory, setAiSuggestedCategory] = useState('');
 
@@ -227,9 +237,11 @@ export default function ExpenseFormScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title={isEditMode ? '지출 수정' : '지출 입력'}
-              showBack
-              onBack={() => navigation.goBack()} />
+      <Header
+        title={isEditMode ? '지출 수정' : ocrData ? 'OCR 자동 입력' : '지출 입력'}
+        showBack
+        onBack={() => navigation.goBack()}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity,Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
+import { recognizeReceipt } from '../lib/api';
+import { useState } from 'react';
 
 const styles = StyleSheet.create({
   container: {
@@ -27,8 +30,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 48,
   },
-  buttonRow: {
+  // 버튼 2x2 그리드
+  buttonGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 16,
     justifyContent: 'center',
   },
@@ -60,10 +65,86 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+
+  // 로딩 오버레이
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default function ExpenseScreen() {
   const navigation = useNavigation<any>();
+  const [loading, setLoading] = useState(false);
+
+   // 이미지 → base64 변환 후 OCR 호출
+  const handleOCR = async (base64: string, mimeType: string) => {
+    setLoading(true);
+    try {
+      const result = await recognizeReceipt(base64, mimeType);
+      if (result.success) {
+        // OCR 결과를 ExpenseForm으로 전달
+        navigation.navigate('ExpenseForm', { ocrData: result.data });
+      }
+    } catch (error) {
+      console.error('OCR 실패:', error);
+      Alert.alert('오류', '영수증 인식에 실패했습니다. 직접 입력해주세요.');
+      navigation.navigate('ExpenseForm');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 카메라 촬영
+  const handleCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('권한 필요', '카메라 권한이 필요합니다.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      await handleOCR(result.assets[0].base64, 'image/jpeg');
+    }
+  };
+
+  // 갤러리 선택
+  const handleGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('권한 필요', '갤러리 권한이 필요합니다.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      await handleOCR(result.assets[0].base64, 'image/jpeg');
+    }
+  };
+  
   return (
     <View style={styles.container}>
       {/* 헤더 */}
@@ -73,17 +154,26 @@ export default function ExpenseScreen() {
         <Text style={styles.title}>입력 방법을 선택해주세요.</Text>
         <Text style={styles.subtitle}>영수증 촬영 또는 직접 입력을 선택해주세요</Text>
 
-        <View style={styles.buttonRow}>
-          {/* 사진 촬영 */}
-          <TouchableOpacity style={styles.optionButton}>
+        <View style={styles.buttonGrid}>
+          {/* 카메라 촬영 */}
+          <TouchableOpacity style={styles.optionButton} onPress={handleCamera}>
             <View style={styles.iconBox}>
               <Ionicons name="camera" size={32} color={Colors.primary} />
             </View>
-            <Text style={styles.optionText}>사진 촬영</Text>
+            <Text style={styles.optionText}>카메라 촬영</Text>
+          </TouchableOpacity>
+
+          {/* 갤러리 선택 */}
+          <TouchableOpacity style={styles.optionButton} onPress={handleGallery}>
+            <View style={styles.iconBox}>
+              <Ionicons name="images" size={32} color={Colors.primary} />
+            </View>
+            <Text style={styles.optionText}>갤러리 선택</Text>
           </TouchableOpacity>
 
           {/* 직접 입력 */}
-          <TouchableOpacity style={styles.optionButton}
+          <TouchableOpacity
+            style={styles.optionButton}
             onPress={() => navigation.navigate('ExpenseForm')}
           >
             <View style={styles.iconBox}>
@@ -93,6 +183,14 @@ export default function ExpenseScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* OCR 로딩 오버레이 */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={Colors.white} />
+          <Text style={styles.loadingText}>영수증 분석 중... ✨</Text>
+        </View>
+      )}
     </View>
   );
 }

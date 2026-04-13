@@ -285,3 +285,18 @@ export async function getGoalAdvice(goalId: string) {
   if (!response.ok) throw new Error('AI 조언을 불러오지 못했습니다.');
   return response.json();
 }
+
+// OCR 영수증 인식
+export async function recognizeReceipt(imageBase64: string, mimeType: string = 'image/jpeg') {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/ocr/`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      image_base64: imageBase64,
+      mime_type: mimeType,
+    }),
+  });
+  if (!response.ok) throw new Error('영수증 인식에 실패했습니다.');
+  return response.json();
+}
