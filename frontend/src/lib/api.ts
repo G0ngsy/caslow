@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
 
 // 백엔드 서버 URL
-// 나중에 Railway 배포 후 실제 URL로 변경
-const BASE_URL = 'http://127.0.0.1:8000';
+// 배포된 Render 서버 URL로 변경
+const BASE_URL = 'https://caslow.onrender.com';
 
 // Supabase 토큰 가져오는 함수
 async function getAuthHeader() {
