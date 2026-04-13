@@ -276,3 +276,12 @@ export async function getAiInsight() {
   if (!response.ok) throw new Error('AI 인사이트를 불러오지 못했습니다.');
   return response.json();
 }
+
+
+// 목표 AI 조언 조회
+export async function getGoalAdvice(goalId: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/chat/goal-advice/${goalId}`, { headers });
+  if (!response.ok) throw new Error('AI 조언을 불러오지 못했습니다.');
+  return response.json();
+}

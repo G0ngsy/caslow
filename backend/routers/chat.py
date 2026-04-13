@@ -133,3 +133,67 @@ def get_insight(authorization: str = Header(...)):
     )
 
     return {"insight": response.choices[0].message.content}
+
+# ✅ 목표 화면 AI 조언 (GET /chat/goal-advice/{goal_id})
+@router.get("/goal-advice/{goal_id}")
+def get_goal_advice(goal_id: str, authorization: str = Header(...)):
+    """목표 데이터 기반으로 AI 조언 생성"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 목표 데이터 가져오기
+    goal = authed_supabase.table("goals") \
+        .select("*") \
+        .eq("id", goal_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not goal.data:
+        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
+
+    goal_data = goal.data[0]
+    percent = round((goal_data["current_amount"] / goal_data["target_amount"]) * 100) if goal_data["target_amount"] > 0 else 0
+
+    # 이번 달 지출 데이터도 함께 가져오기
+    from datetime import date
+    today = date.today()
+    first_day = today.replace(day=1)
+
+    expenses = authed_supabase.table("expenses") \
+        .select("amount, category") \
+        .eq("user_id", user_id) \
+        .gte("date", str(first_day)) \
+        .execute()
+
+    total_expense = sum(e["amount"] for e in expenses.data) if expenses.data else 0
+
+    # Groq API로 조언 생성
+    response = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "system",
+                "content": """당신은 재무 목표 코치 AI입니다. 반드시 한국어로만 답변하세요.
+사용자의 목표 달성 현황을 분석해서 2~3줄의 실용적인 조언을 해주세요.
+구체적인 금액과 달성률을 언급하고, 목표 달성을 위한 팁을 제안해주세요."""
+            },
+            {
+                "role": "user",
+                "content": f"""목표 정보:
+- 목표명: {goal_data['title']}
+- 목표 유형: {goal_data['type']}
+- 목표 금액: {goal_data['target_amount']:,}원
+- 현재 금액: {goal_data['current_amount']:,}원
+- 달성률: {percent}%
+- 기한: {goal_data.get('deadline', '없음')}
+- 이번 달 총 지출: {total_expense:,}원
+
+위 데이터를 바탕으로 조언해주세요."""
+            }
+        ],
+        max_tokens=300,
+        temperature=0.7,
+    )
+
+    return {"advice": response.choices[0].message.content}
