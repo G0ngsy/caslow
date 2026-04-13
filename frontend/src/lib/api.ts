@@ -297,6 +297,10 @@ export async function recognizeReceipt(imageBase64: string, mimeType: string = '
       mime_type: mimeType,
     }),
   });
-  if (!response.ok) throw new Error('영수증 인식에 실패했습니다.');
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('OCR 오류 상세:', response.status, errorBody);
+    throw new Error('영수증 인식에 실패했습니다.');
+  }
   return response.json();
 }

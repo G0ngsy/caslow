@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from routers import expenses,goals,categories,recurring,budget,chat,ocr
-from scheduler import start_scheduler
+from scheduler import start_scheduler, scheduler
 
 # 앱 시작/종료 시 실행되는 함수
 @asynccontextmanager
@@ -14,6 +14,7 @@ async def lifespan(app: FastAPI):
     start_scheduler()
     yield
     # 서버 종료할 때 스케줄러 종료
+    scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
 
