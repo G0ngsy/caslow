@@ -38,6 +38,16 @@ function getCategoryIcon(name: string): string {
   return map[name] || 'pricetag';
 }
 
+// 한글/영문 카테고리 매핑
+const categoryKeyMap: Record<string, string[]> = {
+  '카페': ['카페', 'cafe'],
+  '음식': ['음식', 'food'],
+  '교통': ['교통', 'transport'],
+  '쇼핑': ['쇼핑', 'shopping'],
+  '구독': ['구독', 'subscription'],
+  '기타': ['기타', 'etc'],
+};
+
 // 재테크 명언 목록
 const quotes = [
   '작은 지출이 큰 부를 만든다.',
@@ -458,11 +468,13 @@ const fetchCategories = async () => {
 
 
 
-  // 선택된 카테고리로 지출 필터링
-  const filteredExpenses = selectedCategory === 'all'
-    ? expenses
-    : expenses.filter((e: any) => e.category === selectedCategory);
-
+  // 선택된 카테고리로 지출 필터링 (한글/영문 둘 다 매칭)
+const filteredExpenses = selectedCategory === 'all'
+  ? expenses
+  : expenses.filter((e: any) => {
+      const matchKeys = categoryKeyMap[selectedCategory] || [selectedCategory];
+      return matchKeys.includes(e.category);
+    });
   // 최신순/과거순으로 정렬
   const sortedExpenses = [...filteredExpenses].sort((a, b) => {
     if (sortOrder === 'newest') return b.date.localeCompare(a.date);
