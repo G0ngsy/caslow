@@ -7,7 +7,7 @@ import GoalEditModal, { Goal, GOAL_TYPES } from './modals/GoalEditModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { getGoals, createGoal, deleteGoal, updateGoal } from '../lib/api';
+import { getGoals, createGoal, deleteGoal, updateGoal, getGoalAdvice } from '../lib/api';
 
 
 // 달성률에 따른 프로그레스 바 색상
@@ -334,11 +334,29 @@ export default function GoalScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 삭제 확인 모달
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  // AI 조언 상태 (goal id → 조언 텍스트)
+  const [aiAdvices, setAiAdvices] = useState<Record<string, string>>({});
+  const [loadingAdvices, setLoadingAdvices] = useState<Record<string, boolean>>({});
 
-  // 목표 카드 클릭 시 확장/축소
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => prev === id ? null : id);
-  };
+  // 목표 카드 클릭 시 확장 + AI 조언 불러오기
+const toggleExpand = async (id: string) => {
+  setExpandedId(prev => prev === id ? null : id);
+
+  // 이미 조언이 있으면 다시 불러오지 않음
+  if (aiAdvices[id]) return;
+
+  // AI 조언 불러오기
+  setLoadingAdvices(prev => ({ ...prev, [id]: true }));
+  try {
+    const data = await getGoalAdvice(id);
+    setAiAdvices(prev => ({ ...prev, [id]: data.advice }));
+  } catch (error) {
+    console.error('AI 조언 불러오기 실패:', error);
+    setAiAdvices(prev => ({ ...prev, [id]: 'AI 조언을 불러오지 못했습니다.' }));
+  } finally {
+    setLoadingAdvices(prev => ({ ...prev, [id]: false }));
+  }
+};
 
   // 모달 닫기 + 초기화
   const handleCloseModal = () => {
@@ -434,6 +452,8 @@ const handleSaveEdit = async (updatedGoal: any) => {
     );
   }
 
+  
+
   return (
     <View style={styles.container}>
       <Header title="목표" />
@@ -519,7 +539,14 @@ const handleSaveEdit = async (updatedGoal: any) => {
                       <Ionicons name="sparkles" size={13} color={Colors.primary} />
                       <Text style={styles.aiAdviceTitle}>AI 조언</Text>
                     </View>
-                    <Text style={styles.aiAdviceText}>{getAiAdvice(goal, percent)}</Text>
+                    {loadingAdvices[goal.id] ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <ActivityIndicator size="small" color={Colors.primary} />
+                        <Text style={styles.aiAdviceText}>AI가 조언을 생성 중이에요...</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.aiAdviceText}>{aiAdvices[goal.id] || ''}</Text>
+                    )}
                   </View>
                 )}
               </TouchableOpacity>
