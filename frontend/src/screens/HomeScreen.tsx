@@ -481,8 +481,15 @@ const filteredExpenses = selectedCategory === 'all'
     return a.date.localeCompare(b.date);
   });
 
+  // 이번 달 지출만 필터링
+const currentMonth = new Date().toISOString().slice(0, 7); // "2026-04"
+
+const thisMonthExpenses = expenses.filter((e: any) => 
+  e.date && e.date.startsWith(currentMonth)
+);
+
   // 이번 달 총 지출 계산
-  const totalAmount = expenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+const totalAmount = thisMonthExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
   // 오늘/지난으로 날짜별 그룹화
   const grouped: Record<string, any[]> = {};
@@ -520,10 +527,11 @@ const filteredExpenses = selectedCategory === 'all'
               <Ionicons name="wallet-outline" size={16} color={Colors.textSub} />
               <Text style={styles.summaryLabel}>이번 달 총 지출</Text>
             </View>
-            <Text style={styles.summaryMonth}>4월</Text>
+            {/* 현재 월 동적으로 표시 */}
+            <Text style={styles.summaryMonth}>{new Date().getMonth() + 1}월</Text>
           </View>
           <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
-          <Text style={styles.summaryCount}>{expenses.length}건의 지출</Text>
+          <Text style={styles.summaryCount}>{thisMonthExpenses.length}건의 지출</Text>
           <View style={styles.progressSection}>
             <View style={styles.progressLabelRow}>
               <Text style={styles.progressLabel}>예산 대비</Text>
@@ -543,19 +551,18 @@ const filteredExpenses = selectedCategory === 'all'
           </View>
         </View>
 
-        {/* 카테고리 필터 */}
         
           {/* 카테고리 필터 */}
-<View style={styles.filterContainer}>
-  {categories.map(cat => (
-    <TouchableOpacity
-      key={cat.key}
-      style={[
-        styles.filterButton,
-        selectedCategory === cat.key && styles.filterButtonActive
-      ]}
-      onPress={() => setSelectedCategory(cat.key)}
-    >
+          <View style={styles.filterContainer}>
+            {categories.map(cat => (
+              <TouchableOpacity
+                key={cat.key}
+                style={[
+                  styles.filterButton,
+                  selectedCategory === cat.key && styles.filterButtonActive
+                ]}
+                onPress={() => setSelectedCategory(cat.key)}
+              >
       <Ionicons
         name={cat.icon as any}
         size={14}
