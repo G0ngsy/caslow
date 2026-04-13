@@ -38,3 +38,8 @@ app.include_router(chat.router)
 @app.get("/")
 def root():
     return {"message": "Caslow API is running!"}
+
+# HEAD 요청 허용 (UptimeRobot 헬스체크용)
+@app.head("/")
+def head_root():
+    return {}
