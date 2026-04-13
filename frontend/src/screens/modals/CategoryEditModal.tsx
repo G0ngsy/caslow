@@ -58,11 +58,20 @@ export default function CategoryEditModal({
   }, [visible]);
 
   const handleAdd = () => {
-    if (!newLabel.trim()) return;
-    const color = DEFAULT_COLORS[categories.length % DEFAULT_COLORS.length];
-    onAdd(newLabel.trim(), color);
-    setNewLabel('');
-  };
+  if (!newLabel.trim()) return;
+  
+  // 이미 사용된 색상 제외
+  const usedColors = categories.map((cat: any) => cat.color);
+  const availableColors = DEFAULT_COLORS.filter(c => !usedColors.includes(c));
+  
+  // 사용 가능한 색상이 없으면 순환
+  const color = availableColors.length > 0
+    ? availableColors[0]
+    : DEFAULT_COLORS[categories.length % DEFAULT_COLORS.length];
+
+  onAdd(newLabel.trim(), color);
+  setNewLabel('');
+};
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
