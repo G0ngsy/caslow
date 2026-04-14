@@ -146,14 +146,14 @@ def get_expenses_by_category(
     today = date.today()
     first_day = today.replace(day=1)
 
-    # 전체 데이터 가져오기
+    # 오늘 이하 날짜만 조회 (미래 날짜 제외)
     response = authed_supabase.table("expenses") \
         .select("category, amount, memo") \
         .eq("user_id", user_id) \
         .gte("date", str(first_day)) \
+        .lte("date", str(today)) \
         .execute()
 
-    # 한글 카테고리명 → 영문 키 정규화
     korean_to_key = {
         '카페': 'cafe', '음식': 'food', '교통': 'transport',
         '쇼핑': 'shopping', '구독': 'subscription', '기타': 'etc',
@@ -163,7 +163,6 @@ def get_expenses_by_category(
     for expense in response.data:
         memo = expense.get("memo") or ""
 
-        # 탭 필터 적용
         if tab == "fixed" and "[정기]" not in memo:
             continue
         if tab == "variable" and "[정기]" in memo:
@@ -176,27 +175,27 @@ def get_expenses_by_category(
     return [{"category": k, "amount": v} for k, v in category_totals.items()]
 
 
+
 # ✅ 월별 지출 합계 (GET /expenses/analysis/monthly)
 @router.get("/analysis/monthly")
 def get_expenses_by_month(authorization: str = Header(...)):
-    """최근 6개월 월별 지출 합계 반환"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
     authed_supabase = get_supabase_with_token(token)
 
+    today = date.today()
+
+    # 오늘 이하 날짜만 조회 (미래 날짜 제외)
     response = authed_supabase.table("expenses") \
         .select("date, amount") \
         .eq("user_id", user_id) \
+        .lte("date", str(today)) \
         .execute()
 
-    # 월별 합산
     monthly_totals = defaultdict(int)
     for expense in response.data:
-        month = expense["date"][:7]  # "2026-04" 형식
+        month = expense["date"][:7]
         monthly_totals[month] += expense["amount"]
 
-    # 최근 6개월 정렬
     sorted_months = sorted(monthly_totals.items())[-6:]
-
     return [{"month": k, "amount": v} for k, v in sorted_months]
-

@@ -1,22 +1,33 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import Button from '../components/Button';
-import { useNavigation, useRoute  } from '@react-navigation/native';
-import { createExpense, updateExpense  } from '../lib/api';
+import { useNavigation, useRoute, useFocusEffect  } from '@react-navigation/native';
+import { createExpense, updateExpense,getCategories  } from '../lib/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
-// 카테고리 목록
-const categories = [
-  { key: 'cafe',         label: '카페',   icon: 'cafe',                color: '#A78BFA' },
-  { key: 'food',         label: '음식',   icon: 'restaurant',          color: '#F59E0B' },
-  { key: 'transport',    label: '교통',   icon: 'bus',                 color: '#3B82F6' },
-  { key: 'shopping',     label: '쇼핑',   icon: 'bag',                 color: '#EC4899' },
-  { key: 'subscription', label: '구독',   icon: 'tv',                  color: '#10B981' },
-  { key: 'etc',          label: '기타',   icon: 'ellipsis-horizontal', color: '#6B7280' },
-];
+
+
+// 카테고리 아이콘 매핑 함수
+function getCategoryIcon(name: string): string {
+  const map: Record<string, string> = {
+    '카페': 'cafe',
+    '음식': 'restaurant',
+    '교통': 'bus',
+    '쇼핑': 'bag',
+    '구독': 'tv',
+    '기타': 'ellipsis-horizontal',
+    'cafe': 'cafe',
+    'food': 'restaurant',
+    'transport': 'bus',
+    'shopping': 'bag',
+    'subscription': 'tv',
+    'etc': 'ellipsis-horizontal',
+  };
+  return map[name] || 'pricetag';
+}
 
 // 키워드 기반 카테고리 추천
 function suggestCategory(memo: string): string {
@@ -183,6 +194,32 @@ export default function ExpenseFormScreen() {
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aiSuggestedCategory, setAiSuggestedCategory] = useState('');
+  // DB에서 카테고리 불러오기
+  const [categories, setCategories] = useState<any[]>([]);
+
+  useFocusEffect(
+  useCallback(() => {
+    fetchCategories();
+  }, [])
+);
+
+  const fetchCategories = async () => {
+
+  try {
+    const data = await getCategories();
+    // DB 카테고리를 화면에 맞는 형식으로 변환
+    const formatted = data.map((cat: any) => ({
+      key: cat.name,
+      label: cat.name,
+      icon: getCategoryIcon(cat.name),
+      color: cat.color,
+    }));
+    setCategories(formatted);
+  } catch (error) {
+    console.error('카테고리 불러오기 실패:', error);
+  }
+};
+
 
   // 저장 함수
   const handleSave = async () => {
