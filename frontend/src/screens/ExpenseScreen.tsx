@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionButton: {
-    flex: 1,
+    width: '45%',
     backgroundColor: Colors.bgCard,       // #FFFFFF
     borderRadius: 20,
     padding: 32,
