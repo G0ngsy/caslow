@@ -4,8 +4,9 @@ import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { recognizeReceipt } from '../lib/api';
+import { recognizeReceipt,uploadExcel } from '../lib/api';
 import { useState } from 'react';
+import * as DocumentPicker from 'expo-document-picker';
 
 const styles = StyleSheet.create({
   container: {
@@ -107,6 +108,40 @@ export default function ExpenseScreen() {
     }
   };
 
+  // 엑셀/CSV 파일 가져오기
+const handleExcel = async () => {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+        'application/vnd.ms-excel', // xls
+        'text/csv', // csv
+      ],
+    });
+
+    if (result.canceled) return;
+
+    const file = result.assets[0];
+    setLoading(true);
+
+    // 웹에서는 File 객체로 변환
+    const response = await fetch(file.uri);
+    const blob = await response.blob();
+    const fileObj = new File([blob], file.name, { type: file.mimeType || 'application/octet-stream' });
+
+    const uploadResult = await uploadExcel(fileObj);
+
+    window.alert(`${uploadResult.saved}건의 지출이 저장되었습니다!`);
+    navigation.navigate('HomeMain' as never);
+
+  } catch (error) {
+    console.error('엑셀 가져오기 실패:', error);
+    window.alert('파일 가져오기에 실패했습니다.');
+  } finally {
+    setLoading(false);
+  }
+};
+
   // 카메라 촬영
   const handleCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -169,6 +204,14 @@ export default function ExpenseScreen() {
               <Ionicons name="images" size={32} color={Colors.primary} />
             </View>
             <Text style={styles.optionText}>갤러리 선택</Text>
+          </TouchableOpacity>
+
+          {/* 엑셀/CSV 가져오기 */}
+          <TouchableOpacity style={styles.optionButton} onPress={handleExcel}>
+            <View style={styles.iconBox}>
+              <Ionicons name="document-text" size={32} color={Colors.primary} />
+            </View>
+            <Text style={styles.optionText}>엑셀 가져오기</Text>
           </TouchableOpacity>
 
           {/* 직접 입력 */}

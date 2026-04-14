@@ -304,3 +304,26 @@ export async function recognizeReceipt(imageBase64: string, mimeType: string = '
   }
   return response.json();
 }
+
+// 엑셀/CSV 파일 업로드 및 지출 자동 입력
+export async function uploadExcel(file: File) {
+  const headers = await getAuthHeader();
+  // Content-Type은 FormData가 자동으로 설정하므로 제거
+  delete (headers as any)['Content-Type'];
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${BASE_URL}/excel/upload`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('엑셀 업로드 오류:', errorBody);
+    throw new Error('파일 업로드에 실패했습니다.');
+  }
+  return response.json();
+}
