@@ -468,36 +468,46 @@ const fetchCategories = async () => {
 
 
 
-  // 선택된 카테고리로 지출 필터링 (한글/영문 둘 다 매칭)
+ // 오늘 날짜 (한국 시간 기준)
+const now = new Date();
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+// 이번 달 + 오늘 이하 날짜만 필터링
+const currentMonth = now.toISOString().slice(0, 7);
+
+const validExpenses = expenses.filter((e: any) =>
+  e.date && e.date.startsWith(currentMonth) && e.date <= today
+);
+
+// 선택된 카테고리로 지출 필터링 (한글/영문 둘 다 매칭)
 const filteredExpenses = selectedCategory === 'all'
-  ? expenses
-  : expenses.filter((e: any) => {
+  ? validExpenses
+  : validExpenses.filter((e: any) => {
       const matchKeys = categoryKeyMap[selectedCategory] || [selectedCategory];
       return matchKeys.includes(e.category);
     });
-  // 최신순/과거순으로 정렬
-  const sortedExpenses = [...filteredExpenses].sort((a, b) => {
-    if (sortOrder === 'newest') return b.date.localeCompare(a.date);
-    return a.date.localeCompare(b.date);
-  });
 
-  // 이번 달 지출만 필터링
-const currentMonth = new Date().toISOString().slice(0, 7); // "2026-04"
+
+  // 최신순/과거순으로 정렬
+const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+  if (sortOrder === 'newest') return b.date.localeCompare(a.date);
+  return a.date.localeCompare(b.date);
+});
 
 const thisMonthExpenses = expenses.filter((e: any) => 
   e.date && e.date.startsWith(currentMonth)
 );
 
-  // 이번 달 총 지출 계산
-const totalAmount = thisMonthExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
+ // 이번 달 총 지출 계산 (오늘 이하만)
+const totalAmount = validExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
-  // 오늘/지난으로 날짜별 그룹화
-  const grouped: Record<string, any[]> = {};
-  sortedExpenses.forEach(e => {
-    const label = getDateLabel(e.date);
-    if (!grouped[label]) grouped[label] = [];
-    grouped[label].push(e);
-  });
+ // 오늘/지난으로 날짜별 그룹화
+const grouped: Record<string, any[]> = {};
+sortedExpenses.forEach(e => {
+  const label = getDateLabel(e.date);
+  if (!grouped[label]) grouped[label] = [];
+  grouped[label].push(e);
+});
 
   // 로딩 중일 때 스피너 표시
   if (loadingData) {
