@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import SplashScreen from './src/screens/SplashScreen';
 import { supabase } from './src/lib/supabase';
 import LoginScreen from './src/screens/LoginScreen';
@@ -91,11 +91,15 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
-        <RootStack.Screen name="Tabs" component={TabNavigator} />
-        <RootStack.Screen name="Chat" component={ChatScreen} />
-      </RootStack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <NavigationContainer>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            <RootStack.Screen name="Tabs" component={TabNavigator} />
+            <RootStack.Screen name="Chat" component={ChatScreen} />
+          </RootStack.Navigator>
+        </NavigationContainer>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }

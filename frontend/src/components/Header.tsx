@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderProps {
   title?: string;
@@ -31,7 +32,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
-    flex: 1,
     textAlign: 'center',
   },
   backButton: {
@@ -51,42 +51,31 @@ export default function Header({ title, showLogo = false, showBack = false, onBa
   const navigation = useNavigation<any>();
   return (
   <View style={styles.container}>
-    {showBack && (
-      <TouchableOpacity style={styles.backButton} onPress={onBack}>
-        <Ionicons name="chevron-back" size={24} color={Colors.white} />
-      </TouchableOpacity>
-    )}
-
-    {/* 로고 or 타이틀 */}
-    {showLogo
-      ? <Text style={styles.logo}>Caslow</Text>
-      : <Text style={styles.title}>{title}</Text>
-    }
-
-    {/* 가운데 홈 텍스트 (showLogo일 때만) */}
-    {showLogo && (
-      <Text style={{
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: 'bold',
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-      }}>홈</Text>
-    )}
-
-    {/* 오른쪽 아이콘 */}
-    {showIcons && (
-      <View style={styles.iconGroup}>
-        <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
-          <Ionicons name="chatbubble-outline" size={22} color={Colors.accentLight} />
+    {/* 왼쪽 */}
+    <View style={{ flex: 1 }}>
+      {showBack && (
+        <TouchableOpacity onPress={onBack}>
+          <Ionicons name="chevron-back" size={24} color={Colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="notifications-outline" size={22} color={Colors.accentLight} />
-        </TouchableOpacity>
-      </View>
-    )}
+      )}
+      {showLogo && <Text style={styles.logo}>Caslow</Text>}
+    </View>
+
+    {/* 가운데 */}
+    <View style={{ flex: 1, alignItems: 'center' }}>
+      <Text style={styles.title}>{showLogo ? '홈' : title}</Text>
+    </View>
+
+    {/* 오른쪽 */}
+    <View style={{ flex: 1, alignItems: 'flex-end' }}>
+      {showIcons && (
+        <View style={styles.iconGroup}>
+          <TouchableOpacity onPress={() => navigation.navigate('Chat')}>
+            <Ionicons name="chatbubble-ellipses-outline" size={22} color={Colors.accentLight} />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   </View>
 );
 }

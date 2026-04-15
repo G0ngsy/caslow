@@ -220,7 +220,7 @@ const handleExcel = async () => {
             onPress={() => navigation.navigate('ExpenseForm')}
           >
             <View style={styles.iconBox}>
-              <Ionicons name="create" size={32} color={Colors.primary} />
+              <Ionicons name="pencil-outline" size={32} color={Colors.primary} />
             </View>
             <Text style={styles.optionText}>직접 입력</Text>
           </TouchableOpacity>

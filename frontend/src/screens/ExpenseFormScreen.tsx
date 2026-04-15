@@ -238,14 +238,6 @@ export default function ExpenseFormScreen() {
 
   try {
     if (isEditMode) {
-      console.log('수정 모드 - 전송 데이터:', {
-        id: editingExpense.id,
-        title,
-        amount: parseInt(amount),
-        category: selectedCategory,
-        memo: memo || undefined,
-        date,
-      });
       await updateExpense(editingExpense.id, {
         title,
         amount: parseInt(amount),

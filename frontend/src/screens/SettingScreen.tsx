@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '../constants/colors';
 import { supabase } from '../lib/supabase';
 import Header from '../components/Header';
 import BudgetModal from './modals/BudgetModal';
@@ -347,7 +348,7 @@ const handleSaveBudget = async (amount: number) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F8',
+    backgroundColor: Colors.bgMain,
   },
   scroll: {
     padding: 16,
