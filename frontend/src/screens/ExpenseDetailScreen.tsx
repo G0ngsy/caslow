@@ -250,7 +250,7 @@ const handleSkipRecurringDelete = () => {
             style={styles.editButton}
             onPress={() => navigation.navigate('ExpenseForm', { expense })}
           >
-            <Ionicons name="pencil" size={16} color={Colors.white} />
+            <Ionicons name="pencil-outline" size={16} color={Colors.white} />
             <Text style={styles.editButtonText}>수정</Text>
           </TouchableOpacity>
 

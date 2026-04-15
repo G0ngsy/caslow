@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+
 
 const styles = StyleSheet.create({
   container: {
@@ -8,14 +9,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.bgHeader,    // #1B1E3E
     borderTopWidth: 1,
     borderTopColor: '#255DAA',
-    height: 70,
     alignItems: 'center',
-    paddingBottom: 10,
+    height: 65,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     height: '100%',
   },
   tabLabel: {
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,    // #255DAA
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
     borderWidth: 3,
     borderColor: Colors.bgMain,         // #E3F2FF
     shadowColor: Colors.primary,
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 8,
-    marginTop: -20,
+    marginTop: -28,
   },
 });
 
@@ -46,7 +46,7 @@ export default function TabBar({ state, descriptors, navigation }: any) {
   const tabs = [
     { name: '홈',   icon: 'home',      activeIcon: 'home' },
     { name: '분석', icon: 'bar-chart-outline', activeIcon: 'bar-chart' },
-    { name: '입력', icon: 'add',       activeIcon: 'add',  isCenter: true },
+    { name: '입력', icon: 'create-outline', activeIcon: 'create', isCenter: true },
     { name: '목표', icon: 'flag-outline',      activeIcon: 'flag' },
     { name: '설정', icon: 'settings-outline',  activeIcon: 'settings' },
   ];
@@ -83,7 +83,7 @@ export default function TabBar({ state, descriptors, navigation }: any) {
               onPress={onPress}
             >
               <View style={styles.centerButton}>
-                <Ionicons name="add" size={32} color={Colors.white} />
+                <MaterialCommunityIcons name="text-box-edit-outline" size={28} color={Colors.white} />
               </View>
               {/* 지출입력 메뉴명 */}
               <Text style={[

@@ -60,7 +60,6 @@ export default function SignupScreen({ onNavigateLogin }: { onNavigateLogin?: ()
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    console.log('회원가입 버튼 클릭됨', { name, email, password, confirmPassword })
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('오류', '모든 항목을 입력해주세요.');
       return;

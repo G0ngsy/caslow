@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     color: Colors.textSub,                // #A3D8F1
-    fontSize: 13,
+    fontSize: 15,
     marginBottom: 8,
   },
   summaryAmount: {
@@ -299,7 +299,7 @@ summaryMonth: {
   borderRadius: 20,
 },
 summaryCount: {
-  color: '#437CA1',
+  color: '#A3D8F1',
   fontSize: 13,
   marginTop: 4,
   marginBottom: 16,
@@ -313,7 +313,7 @@ progressLabelRow: {
   marginBottom: 6,
 },
 progressLabel: {
-  color: '#437CA1',
+  color: '#A3D8F1',
   fontSize: 12,
 },
 progressPercent: {
@@ -338,7 +338,7 @@ progressFooter: {
   marginTop: 6,
 },
 progressFooterText: {
-  color: '#437CA1',
+  color: '#A3D8F1',
   fontSize: 11,
 },
 
@@ -534,7 +534,7 @@ sortedExpenses.forEach(e => {
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <View style={styles.summaryHeaderLeft}>
-              <Ionicons name="wallet-outline" size={16} color={Colors.textSub} />
+              <Ionicons name="wallet-outline" size={20} color={Colors.textSub} />
               <Text style={styles.summaryLabel}>이번 달 총 지출</Text>
             </View>
             {/* 현재 월 동적으로 표시 */}

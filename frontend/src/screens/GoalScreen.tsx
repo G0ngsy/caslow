@@ -492,7 +492,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
                       style={styles.editBtn}
                       onPress={() => setEditingGoal(goal)}
                     >
-                      <Ionicons name="create-outline" size={16} color={Colors.primary} />
+                      <Ionicons name="pencil-outline" size={16} color={Colors.primary} />
                     </TouchableOpacity>
 
                     {/* 삭제 버튼 */}
@@ -556,7 +556,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
       </ScrollView>
 
       {/* + 추가 버튼 */}
-      <TouchableOpacity style={styles.addButton} onPress={() => setShowModal(true)}>
+      <TouchableOpacity style={[styles.addButton, { bottom: 20 }]} onPress={() => setShowModal(true)}>
         <Ionicons name="add" size={28} color={Colors.white} />
       </TouchableOpacity>
 
