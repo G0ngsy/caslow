@@ -1,10 +1,9 @@
 # 이메일 알림 라우터
 # SendGrid로 매일 아침 8시 AI 소비 조언 이메일 전송
 
-import email
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Email as SendGridEmail,To
+from sendgrid.helpers.mail import Mail, Email as SendGridEmail, To
 from groq import Groq
 from database import supabase, supabase_admin
 from collections import defaultdict
@@ -29,12 +28,13 @@ def test_email():
     return {"success": True, "message": "이메일 발송 완료!"}
 
 def send_email(to_email: str, subject: str, content: str):
-    message = Mail(
-        from_email=SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow"),
-        to_emails=To(to_email),
-        subject=subject,
-        html_content=content
-    )
+    """SendGrid로 이메일 전송"""
+    message = Mail()
+    message.from_email = SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow")
+    message.to = To(to_email)
+    message.subject = subject
+    message.html_content = content
+    
     sg = SendGridAPIClient(SENDGRID_API_KEY)
     sg.send(message)
     
@@ -76,7 +76,7 @@ def send_daily_email_advice():
             <h2>🌅 Caslow 오늘의 소비 조언</h2>
             <p>어제 지출 내역이 없어요! 오늘도 현명한 소비 하세요 😊</p>
             """
-            send_email(email, "🌅 Caslow 오늘의 소비 조언", html)
+            send_email(user_email, "🌅 Caslow 오늘의 소비 조언", html)
             continue
 
         # 카테고리 요약
