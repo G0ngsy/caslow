@@ -3,7 +3,7 @@
 
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Email as SendGridEmail, To
+from sendgrid.helpers.mail import Mail, Email as SendGridEmail
 from groq import Groq
 from database import supabase, supabase_admin
 from collections import defaultdict
@@ -29,11 +29,12 @@ def test_email():
 
 def send_email(to_email: str, subject: str, content: str):
     """SendGrid로 이메일 전송"""
-    message = Mail()
-    message.from_email = SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow")
-    message.to = To(to_email)
-    message.subject = subject
-    message.html_content = content
+    message = Mail(
+        from_email=SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow"),
+        to_emails=to_email,
+        subject=subject,
+        html_content=content,
+    )
     
     sg = SendGridAPIClient(SENDGRID_API_KEY)
     try:
