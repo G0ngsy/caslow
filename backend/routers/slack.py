@@ -7,10 +7,22 @@ from groq import Groq
 from database import supabase
 from dotenv import load_dotenv
 import httpx
+from fastapi import APIRouter
+
+
 
 load_dotenv()
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+router = APIRouter(prefix="/slack", tags=["slack"])
+
+# ✅ 슬랙 알림 즉시 테스트 (GET /slack/test)
+@router.get("/test")
+def test_slack():
+    """슬랙 알림 즉시 테스트"""
+    send_daily_advice()
+    return {"success": True, "message": "슬랙 알림 전송 완료!"}
 
 # 슬랙 Webhook URL
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
