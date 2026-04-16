@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -224,15 +224,15 @@ export default function ExpenseFormScreen() {
   // 저장 함수
   const handleSave = async () => {
   if (!title) {
-    window.alert('제목을 입력해주세요.');
+    Alert.alert('알림','제목을 입력해주세요.');
     return;
   }
   if (!amount) {
-    window.alert('금액을 입력해주세요.');
+    Alert.alert('알림','금액을 입력해주세요.');
     return;
   }
   if (!selectedCategory) {
-    window.alert('카테고리를 선택해주세요.');
+    Alert.alert('알림','카테고리를 선택해주세요.');
     return;
   }
 
@@ -245,7 +245,7 @@ export default function ExpenseFormScreen() {
         memo: memo || undefined,
         date,
       });
-      window.alert('수정되었습니다!');
+      Alert.alert('알림','수정되었습니다!');
       navigation.navigate('HomeMain');
     } else {
       await createExpense({
@@ -255,12 +255,12 @@ export default function ExpenseFormScreen() {
         memo: memo || undefined,
         date,
       });
-      window.alert('저장되었습니다!');
+      Alert.alert('알림','저장되었습니다!');
       navigation.goBack();
     }
   } catch (error) {
     console.error('저장 실패:', error);
-    window.alert('저장에 실패했습니다.');
+    Alert.alert('알림','저장에 실패했습니다.');
   }
 };
 

@@ -82,7 +82,7 @@ const handleSaveBudget = async (amount: number) => {
     setBudget(amount);
   } catch (error) {
     console.error('예산 저장 실패:', error);
-    window.alert('예산 저장에 실패했습니다.');
+    Alert.alert('알림','예산 저장에 실패했습니다.');
   }
 };
 
@@ -157,7 +157,7 @@ const handleSaveBudget = async (amount: number) => {
     fetchRecurring();
   } catch (error) {
     console.error('정기 지출 추가 실패:', error);
-    window.alert('정기 지출 추가에 실패했습니다.');
+    Alert.alert('알림','정기 지출 추가에 실패했습니다.');
   }
 };
 
@@ -180,7 +180,7 @@ const handleSaveBudget = async (amount: number) => {
     setDeleteRecurringId(null);
   } catch (error) {
     console.error('정기 지출 삭제 실패:', error);
-    window.alert('삭제에 실패했습니다.');
+    Alert.alert('알림','삭제에 실패했습니다.');
   }
 };
 
@@ -207,7 +207,7 @@ const handleSaveBudget = async (amount: number) => {
   // 로그아웃
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) window.alert('오류: ' + error.message);
+    if (error) Alert.alert('알림','오류: ' + error.message);
     setLogoutModalVisible(false);
   };
 

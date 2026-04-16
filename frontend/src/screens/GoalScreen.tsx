@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform,ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -381,7 +381,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
     setEditingGoal(null);
   } catch (error) {
     console.error('목표 수정 실패:', error);
-    window.alert('수정에 실패했습니다.');
+    Alert.alert('알림','수정에 실패했습니다.');
   }
 };
 
@@ -408,7 +408,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
   // 목표 추가
   const handleAddGoal = async () => {
     if (!title || !amount) {
-      window.alert('이름과 금액을 입력해주세요.');
+      Alert.alert('알림','이름과 금액을 입력해주세요.');
       return;
     }
     try {
@@ -422,7 +422,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
       fetchGoals();
     } catch (error) {
       console.error('목표 추가 실패:', error);
-      window.alert('목표 추가에 실패했습니다.');
+      Alert.alert('알림','목표 추가에 실패했습니다.');
     }
   };
 
@@ -438,7 +438,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
       fetchGoals();
     } catch (error) {
       console.error('목표 삭제 실패:', error);
-      window.alert('삭제에 실패했습니다.');
+      Alert.alert('알림','삭제에 실패했습니다.');
     } finally {
       setDeleteTargetId(null);
     }

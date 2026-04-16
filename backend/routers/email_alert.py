@@ -21,6 +21,7 @@ SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")  # 발신자 이메일
 router = APIRouter(prefix="/email", tags=["email"])
 
 
+
 def send_email(to_email: str, subject: str, content: str):
     """SendGrid로 이메일 전송"""
     message = Mail(
