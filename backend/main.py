@@ -4,7 +4,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import expenses,goals,categories,recurring,budget,chat,ocr,excel
+from routers import expenses,goals,categories,recurring,budget,chat,ocr,excel,profiles
 from scheduler import start_scheduler, scheduler
 
 # 앱 시작/종료 시 실행되는 함수
@@ -37,6 +37,7 @@ app.include_router(budget.router)
 app.include_router(chat.router)
 app.include_router(ocr.router)
 app.include_router(excel.router)
+app.include_router(profiles.router)
 # 서버 상태 확인용 API
 @app.get("/")
 def root():

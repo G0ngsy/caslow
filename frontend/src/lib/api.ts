@@ -327,3 +327,15 @@ export async function uploadExcel(file: File) {
   }
   return response.json();
 }
+
+// 푸시 토큰 저장
+export async function savePushToken(token: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/profiles/push-token`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ push_token: token }),
+  });
+  if (!response.ok) throw new Error('푸시 토큰 저장 실패');
+  return response.json();
+}

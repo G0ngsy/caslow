@@ -16,6 +16,8 @@ import ChatScreen from './src/screens/ChatScreen';
 import SettingScreen from './src/screens/SettingScreen';
 import TabBar from './src/components/TabBar';
 import GoalScreen from './src/screens/GoalScreen';
+import * as Notifications from 'expo-notifications';
+import { savePushToken } from './src/lib/api';
 
 const Tab = createBottomTabNavigator();
 const ExpenseStack = createNativeStackNavigator();
@@ -66,6 +68,25 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSignup, setShowSignup] = useState(false);
+
+  // 푸시 알림 권한 요청 및 토큰 저장
+  const registerPushToken = async () => {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') return;
+
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId: 'your-project-id', // app.json의 projectId
+      });
+
+      await savePushToken(token.data);
+      console.log('푸시 토큰 저장 완료:', token.data);
+    } catch (error) {
+      console.error('푸시 토큰 등록 실패:', error);
+    }
+  };
+
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

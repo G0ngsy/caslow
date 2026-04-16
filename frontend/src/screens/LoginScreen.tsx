@@ -4,6 +4,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { supabase } from '../lib/supabase';
 import { Colors } from '../constants/colors';
+import { registerPushToken } from '../lib/pushNotification';
 
 const styles = StyleSheet.create({
   container: {
@@ -63,7 +64,10 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
     setLoading(false);
     if (error) {
       Alert.alert('로그인 실패', error.message);
-    }
+    }else {
+    // 로그인 성공 후 푸시 토큰 저장
+    await registerPushToken();
+  }
   };
 
   return (
