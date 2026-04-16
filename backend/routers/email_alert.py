@@ -1,6 +1,7 @@
 # 이메일 알림 라우터
 # SendGrid로 매일 아침 8시 AI 소비 조언 이메일 전송
 
+import email
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -30,7 +31,7 @@ def test_email():
 def send_email(to_email: str, subject: str, content: str):
     """SendGrid로 이메일 전송"""
     message = Mail(
-        from_email=SENDGRID_FROM_EMAIL,
+        from_email=email(SENDGRID_FROM_EMAIL, "Caslow"),
         to_emails=to_email,
         subject=subject,
         html_content=content
@@ -89,7 +90,7 @@ def send_daily_email_advice():
 어제 지출: 총 {total:,}원 ({len(expenses)}건)
 카테고리별: {dict(category_totals)}
 
-오늘의 소비 조언을 2~3줄로 친근하고 실용적으로 한국어로 작성해주세요.
+오늘의 소비 조언을 2~3줄로 친근하고 실용적으로 반드시 한국어로 작성해주세요.
 """
         ai_response = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
