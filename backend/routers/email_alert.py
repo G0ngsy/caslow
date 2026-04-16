@@ -20,12 +20,6 @@ SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")  # 발신자 이메일
 
 router = APIRouter(prefix="/email", tags=["email"])
 
-# ✅ 이메일 알림 즉시 테스트 (GET /email/test)
-@router.get("/test")
-def test_email():
-    """이메일 알림 즉시 테스트"""
-    send_daily_email_advice()
-    return {"success": True, "message": "이메일 발송 완료!"}
 
 def send_email(to_email: str, subject: str, content: str):
     """SendGrid로 이메일 전송"""
