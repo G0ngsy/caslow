@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -181,7 +181,7 @@ const handleConfirmDelete = async () => {
     }
   } catch (error) {
     console.error('삭제 실패:', error);
-    window.alert('삭제에 실패했습니다.');
+    Alert.alert('오류', '삭제에 실패했습니다.');
   }
 };
 

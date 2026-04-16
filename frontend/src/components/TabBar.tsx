@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 3,
   },
+  
   // 가운데 버튼 (튀어나오는 효과)
   centerButton: {
     width: 60,
