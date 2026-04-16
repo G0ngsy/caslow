@@ -36,7 +36,12 @@ def send_email(to_email: str, subject: str, content: str):
     message.html_content = content
     
     sg = SendGridAPIClient(SENDGRID_API_KEY)
-    sg.send(message)
+    try:
+        response = sg.send(message)
+        print(f"[이메일] 발송 성공: {response.status_code}")
+    except Exception as e:
+        print(f"[이메일] 발송 실패: {e.body}")
+        raise
     
     
 def send_daily_email_advice():
