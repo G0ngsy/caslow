@@ -55,20 +55,30 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
   const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('오류', '이메일과 비밀번호를 입력해주세요.');
-      return;
+  if (!email || !password) {
+    Alert.alert('오류', '이메일과 비밀번호를 입력해주세요.');
+    return;
+  }
+  setLoading(true);
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  setLoading(false);
+  
+  if (error) {
+    // 에러 종류별 한국어 메시지
+    if (error.message.includes('Invalid login credentials')) {
+      Alert.alert('로그인 실패', '이메일 또는 비밀번호가 올바르지 않아요.');
+    } else if (error.message.includes('Email not confirmed')) {
+      Alert.alert('로그인 실패', '이메일 인증이 필요해요. 메일함을 확인해주세요.');
+    } else if (error.message.includes('too many requests')) {
+      Alert.alert('로그인 실패', '너무 많은 시도가 있었어요. 잠시 후 다시 시도해주세요.');
+    } else {
+      Alert.alert('로그인 실패', '로그인에 실패했어요. 다시 시도해주세요.');
     }
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      Alert.alert('로그인 실패', error.message);
-    }else {
+  } else {
     // 로그인 성공 후 푸시 토큰 저장
     await registerPushToken();
   }
-  };
+};
 
   return (
     <View style={styles.container}>
