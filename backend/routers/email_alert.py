@@ -4,7 +4,7 @@
 import email
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Email as SendGridEmail
 from groq import Groq
 from database import supabase, supabase_admin
 from collections import defaultdict
@@ -29,16 +29,16 @@ def test_email():
     return {"success": True, "message": "이메일 발송 완료!"}
 
 def send_email(to_email: str, subject: str, content: str):
-    """SendGrid로 이메일 전송"""
     message = Mail(
-        from_email=email(SENDGRID_FROM_EMAIL, "Caslow"),
+        from_email=SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow"),
         to_emails=to_email,
         subject=subject,
         html_content=content
     )
     sg = SendGridAPIClient(SENDGRID_API_KEY)
     sg.send(message)
-
+    
+    
 def send_daily_email_advice():
     """매일 아침 8시 실행 - 개인별 이메일 전송"""
     yesterday = str(date.today() - timedelta(days=1))
@@ -48,9 +48,9 @@ def send_daily_email_advice():
     users = supabase_admin.auth.admin.list_users()
 
     for user in users:
-        email = user.email
+        user_email = user.email  # email → user_email
         user_id = user.id
-        if not email:
+        if not user_email:
             continue
 
         # 유저별 어제 지출 조회
@@ -122,6 +122,6 @@ def send_daily_email_advice():
         </div>
         """
 
-        send_email(email, "🌅 Caslow 오늘의 소비 조언", html)
+        send_email(user_email, "🌅 Caslow 오늘의 소비 조언", html)
 
     print(f"[이메일] {len(users)}명에게 발송 완료!")
