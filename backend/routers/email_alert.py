@@ -4,7 +4,7 @@
 import email
 import os
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Email as SendGridEmail
+from sendgrid.helpers.mail import Mail, Email as SendGridEmail,To
 from groq import Groq
 from database import supabase, supabase_admin
 from collections import defaultdict
@@ -31,7 +31,7 @@ def test_email():
 def send_email(to_email: str, subject: str, content: str):
     message = Mail(
         from_email=SendGridEmail(SENDGRID_FROM_EMAIL, "Caslow"),
-        to_emails=to_email,
+        to_emails=To(to_email),
         subject=subject,
         html_content=content
     )
