@@ -21,3 +21,9 @@ def get_supabase_with_token(token: str) -> Client:
     client = create_client(SUPABASE_URL, SUPABASE_KEY)
     client.auth.set_session(token, token)
     return client
+
+# 서비스 키로 관리자 권한 클라이언트
+supabase_admin = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_SERVICE_KEY")
+)

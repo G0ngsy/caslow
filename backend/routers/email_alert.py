@@ -5,7 +5,7 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from groq import Groq
-from database import supabase
+from database import supabase, supabase_admin
 from collections import defaultdict
 from datetime import date, timedelta
 from dotenv import load_dotenv
@@ -44,7 +44,7 @@ def send_daily_email_advice():
     today = str(date.today())
 
     # 모든 유저 이메일 조회 (Supabase auth)
-    users = supabase.auth.admin.list_users()
+    users = supabase_admin.auth.admin.list_users()
 
     for user in users:
         email = user.email
