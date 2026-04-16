@@ -339,3 +339,14 @@ export async function savePushToken(token: string) {
   if (!response.ok) throw new Error('푸시 토큰 저장 실패');
   return response.json();
 }
+
+// 회원탈퇴
+export async function withdrawAccount() {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/auth/withdraw`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) throw new Error('회원탈퇴에 실패했습니다.');
+  return response.json();
+}

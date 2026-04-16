@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import {
   getCategories, createCategory, deleteCategory,deleteExpensesByMemo,getBudget, saveBudget,
-  getRecurringExpenses, createRecurringExpense, deleteRecurringExpense,createExpense
+  getRecurringExpenses, createRecurringExpense, deleteRecurringExpense,createExpense,withdrawAccount
 } from '../lib/api';
 
 // 카테고리 이름 → 아이콘 자동 매핑
@@ -45,7 +45,6 @@ export default function SettingScreen() {
   const [categories, setCategories] = useState<any[]>([]);
   // 정기 지출 목록 상태
   const [recurringItems, setRecurringItems] = useState<any[]>([]);
-
   // 모달 표시 여부
   const [budgetModalVisible, setBudgetModalVisible] = useState(false);
   const [recurringModalVisible, setRecurringModalVisible] = useState(false);
@@ -53,7 +52,7 @@ export default function SettingScreen() {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   // 예산 상태 (기본값 500000)
   const [budget, setBudget] = useState(0);
-
+  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   // 삭제할 정기 지출 ID (null이면 모달 닫힘)
   const [deleteRecurringId, setDeleteRecurringId] = useState<string | null>(null);
 
@@ -212,6 +211,17 @@ const handleSaveBudget = async (amount: number) => {
     setLogoutModalVisible(false);
   };
 
+  // 회원탈퇴 처리
+  const handleWithdraw = async () => {
+  try {
+    await withdrawAccount();
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error('회원탈퇴 실패:', error);
+    Alert.alert('오류', '회원탈퇴에 실패했습니다.');
+  }
+};
+
   return (
     <View style={styles.container}>
       <Header title="설정" />
@@ -301,6 +311,14 @@ const handleSaveBudget = async (amount: number) => {
           <Text style={styles.logoutText}>로그아웃</Text>
         </TouchableOpacity>
 
+        {/* 회원탈퇴 */}
+        <TouchableOpacity style={styles.withdrawCard} onPress={() => setWithdrawModalVisible(true)}>
+          <View style={styles.logoutIconBox}>
+            <Ionicons name="trash-outline" size={20} color="#999" />
+          </View>
+          <Text style={styles.withdrawText}>회원탈퇴</Text>
+        </TouchableOpacity>
+
       </ScrollView>
 
       {/* 월 예산 설정 모달 */}
@@ -341,6 +359,15 @@ const handleSaveBudget = async (amount: number) => {
         visible={logoutModalVisible}
         onConfirm={handleLogout}
         onCancel={() => setLogoutModalVisible(false)}
+      />
+
+      {/* 회원탈퇴 확인 모달 */}
+      <DeleteConfirmModal
+        visible={withdrawModalVisible}
+        message="탈퇴하면 모든 데이터가 삭제되고 복구할 수 없어요. 정말 탈퇴하시겠어요?"
+        variant="delete"
+        onConfirm={() => { handleWithdraw(); }}
+        onCancel={() => setWithdrawModalVisible(false)}
       />
     </View>
   );
@@ -470,5 +497,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#E53935',
+  },
+
+  withdrawCard: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: Colors.bgCard,
+  borderRadius: 16,
+  padding: 16,
+  marginTop: 8,
+  gap: 12,
+  borderWidth: 1,
+  borderColor: Colors.border,
+  },
+  withdrawText: {
+    color: '#999',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

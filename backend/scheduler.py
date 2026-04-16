@@ -6,6 +6,7 @@ from apscheduler.schedulers.background import BackgroundScheduler  # AsyncIO →
 from datetime import date
 from database import supabase
 from routers.slack import send_daily_advice
+from routers.email_alert import send_daily_email_advice
 
 # 스케줄러 인스턴스 생성
 scheduler = BackgroundScheduler()
@@ -68,4 +69,33 @@ def start_scheduler():
     scheduler.start()
     print("[스케줄러] 시작됨 - 매일 자정 정기 지출 + 매일 8시 슬랙 알림")
     
-    
+    def start_scheduler():
+    # 기존 정기 지출 스케줄러
+        scheduler.add_job(
+            process_recurring_expenses,
+            trigger="cron",
+            hour=0,
+            minute=0,
+            id="recurring_expenses_job"
+        )
+
+        # 매일 아침 8시 슬랙 알림
+        scheduler.add_job(
+            send_daily_advice,
+            trigger="cron",
+            hour=8,
+            minute=0,
+            id="daily_slack_advice_job"
+        )
+
+        # 매일 아침 8시 이메일 알림 추가
+        scheduler.add_job(
+            send_daily_email_advice,
+            trigger="cron",
+            hour=8,
+            minute=0,
+            id="daily_email_advice_job"
+        )
+
+        scheduler.start()
+        print("[스케줄러] 시작됨")
