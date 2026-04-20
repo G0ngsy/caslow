@@ -4,7 +4,7 @@
 from fastapi import APIRouter, HTTPException, Header
 from database import supabase, get_supabase_with_token
 from models.expense import ExpenseCreate, ExpenseUpdate
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from collections import defaultdict
 from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
 
@@ -61,6 +61,7 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
         "category": expense.category,
         "memo": expense.memo,
         "date": str(expense.date),
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     response = authed_supabase.table("expenses").insert(data).execute()
     if not response.data:
@@ -85,7 +86,7 @@ def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str =
     authed_supabase = get_supabase_with_token(token)
 
     # None이 아닌 값만 업데이트
-    data = {k: v for k, v in expense.dict().items() if v is not None}
+    data = {k: v for k, v in expense.model_dump().items() if v is not None}
     if "date" in data:
         data["date"] = str(data["date"])
 
