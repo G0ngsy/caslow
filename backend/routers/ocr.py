@@ -69,13 +69,19 @@ def recognize_receipt(request: OCRRequest, authorization: str = Header(...)):
         ],
         max_tokens=300,
         temperature=0.1,  # 낮은 온도로 정확한 JSON 출력
-        response_format={"type": "json_object"},  # JSON 모드
+        # response_format은 Groq Vision 모델에서 미지원 - 제거
     )
 
     # 응답 파싱
     import json
+    import re
     try:
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        # JSON 블록이 마크다운 코드블록으로 감싸져 있을 경우 추출
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            content = json_match.group()
+        result = json.loads(content)
         return {
             "success": True,
             "data": {
@@ -86,5 +92,5 @@ def recognize_receipt(request: OCRRequest, authorization: str = Header(...)):
                 "memo": result.get("memo", ""),
             }
         }
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         raise HTTPException(status_code=500, detail="영수증 인식에 실패했습니다.")
