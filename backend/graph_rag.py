@@ -300,6 +300,81 @@ class CaslowGraphRAG:
             DETACH DELETE e
         """, {"id": str(expense_id)})
 
+    def sync_goal(self, goal: dict):
+        """
+        목표 노드 추가/업데이트 (user_id 포함)
+        목표 생성/수정 시 호출
+        """
+        percent = round(
+            (goal.get('current_amount', 0) / goal.get('target_amount', 1)) * 100
+        )
+        self._run("""
+            MERGE (g:Goal {id: $id})
+            SET g.title          = $title,
+                g.target_amount  = $target_amount,
+                g.current_amount = $current_amount,
+                g.percent        = $percent,
+                g.deadline       = $deadline,
+                g.user_id        = $user_id
+
+            WITH g
+            WHERE $percent < 50
+            MATCH (p:Pattern)
+            MERGE (p)-[:EXCEEDS_BUDGET]->(g)
+        """, {
+            "id":             str(goal['id']),
+            "title":          goal.get('title', ''),
+            "target_amount":  goal.get('target_amount', 0),
+            "current_amount": goal.get('current_amount', 0),
+            "percent":        percent,
+            "deadline":       str(goal.get('deadline', '')),
+            "user_id":        str(goal.get('user_id', '')),
+        })
+
+    def delete_goal(self, goal_id: str):
+        """
+        목표 노드 삭제
+        목표 삭제 시 호출
+        """
+        self._run("""
+            MATCH (g:Goal {id: $id})
+            DETACH DELETE g
+        """, {"id": str(goal_id)})
+
+    def sync_recurring(self, recurring: dict):
+        """
+        정기 지출 노드 추가/업데이트 (user_id 포함)
+        정기 지출 생성 시 호출
+        """
+        self._run("""
+            MERGE (r:Recurring {id: $id})
+            SET r.title        = $title,
+                r.amount       = $amount,
+                r.category     = $category,
+                r.day_of_month = $day_of_month,
+                r.user_id      = $user_id
+
+            MERGE (c:Category {name: $category})
+            MERGE (r)-[:RECURS_MONTHLY]->(c)
+        """, {
+            "id":           str(recurring['id']),
+            "title":        recurring.get('title', ''),
+            "amount":       recurring.get('amount', 0),
+            "category":     recurring.get('category', '기타'),
+            "day_of_month": recurring.get('day_of_month', 1),
+            "user_id":      str(recurring.get('user_id', '')),
+        })
+
+    def delete_recurring(self, recurring_id: str):
+        """
+        정기 지출 노드 삭제
+        정기 지출 삭제 시 호출
+        """
+        self._run("""
+            MATCH (r:Recurring {id: $id})
+            DETACH DELETE r
+        """, {"id": str(recurring_id)})
+
 
 # 앱 전체에서 공유하는 싱글톤 인스턴스
 # Neo4j 드라이버 연결을 매 요청마다 생성하지 않기 위해 한 번만 생성
@@ -308,76 +383,3 @@ try:
 except Exception as e:
     print(f"⚠️ Neo4j 초기화 실패: {e}")
     graph_rag = None
-    
-def sync_goal(self, goal: dict):
-    """
-    목표 노드 추가/업데이트
-    목표 생성/수정 시 호출
-    """
-    percent = round(
-        (goal.get('current_amount', 0) / goal.get('target_amount', 1)) * 100
-    )
-    self._run("""
-        MERGE (g:Goal {id: $id})
-        SET g.title          = $title,
-            g.target_amount  = $target_amount,
-            g.current_amount = $current_amount,
-            g.percent        = $percent,
-            g.deadline       = $deadline
-
-        WITH g
-        WHERE $percent < 50
-        MATCH (p:Pattern)
-        MERGE (p)-[:EXCEEDS_BUDGET]->(g)
-    """, {
-        "id":             str(goal['id']),
-        "title":          goal.get('title', ''),
-        "target_amount":  goal.get('target_amount', 0),
-        "current_amount": goal.get('current_amount', 0),
-        "percent":        percent,
-        "deadline":       str(goal.get('deadline', '')),
-    })
-
-def delete_goal(self, goal_id: str):
-    """
-    목표 노드 삭제
-    목표 삭제 시 호출
-    """
-    self._run("""
-        MATCH (g:Goal {id: $id})
-        DETACH DELETE g
-    """, {"id": str(goal_id)})
-    
-def sync_recurring(self, recurring: dict):
-    """
-    정기 지출 노드 추가/업데이트
-    정기 지출 생성 시 호출
-    """
-    self._run("""
-        MERGE (r:Recurring {id: $id})
-        SET r.title        = $title,
-            r.amount       = $amount,
-            r.category     = $category,
-            r.day_of_month = $day_of_month
-
-        MERGE (c:Category {name: $category})
-        MERGE (r)-[:RECURS_MONTHLY]->(c)
-    """, {
-        "id":           str(recurring['id']),
-        "title":        recurring.get('title', ''),
-        "amount":       recurring.get('amount', 0),
-        "category":     recurring.get('category', '기타'),
-        "day_of_month": recurring.get('day_of_month', 1),
-    })
-
-def delete_recurring(self, recurring_id: str):
-    """
-    정기 지출 노드 삭제
-    정기 지출 삭제 시 호출
-    """
-    self._run("""
-        MATCH (r:Recurring {id: $id})
-        DETACH DELETE r
-    """, {"id": str(recurring_id)})
-    
-    

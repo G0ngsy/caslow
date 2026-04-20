@@ -5,24 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Colors } from '../constants/colors';
 import { updateExpense, deleteExpense , deleteRecurringByTitle } from '../lib/api';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
-
-// 카테고리별 아이콘 및 색상
-const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
-  // 영어 키
-  cafe:         { icon: 'cafe',                color: '#A78BFA', label: '카페' },
-  food:         { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
-  transport:    { icon: 'bus',                 color: '#3B82F6', label: '교통' },
-  shopping:     { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
-  subscription: { icon: 'tv',                  color: '#10B981', label: '구독' },
-  // 한글 키 추가
-  '카페':       { icon: 'cafe',                color: '#A78BFA', label: '카페' },
-  '음식':       { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
-  '교통':       { icon: 'bus',                 color: '#3B82F6', label: '교통' },
-  '쇼핑':       { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
-  '구독':       { icon: 'tv',                  color: '#10B981', label: '구독' },
-  '기타':       { icon: 'ellipsis-horizontal', color: '#6B7280', label: '기타' },
-  default:      { icon: 'card',                color: '#6B7280', label: '기타' },
-};
+import { categoryConfig } from '../constants/categories';
 
 function formatAmount(amount: number): string {
   return amount.toLocaleString('ko-KR');

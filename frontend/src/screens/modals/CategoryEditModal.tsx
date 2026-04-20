@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Colors } from '../../constants/colors';
+import { getCategoryEmoji } from '../../constants/categories';
 
 export type Category = {
   id: string;
@@ -12,28 +13,6 @@ const DEFAULT_COLORS = [
   '#A78BFA', '#F59E0B', '#3B82F6', '#EC4899',
   '#10B981', '#6B7280', '#EF4444', '#8B5CF6',
 ];
-
-// 카테고리 이름 → 아이콘 자동 매핑
-const ICON_MAP: { keywords: string[]; icon: string }[] = [
-  { keywords: ['카페', '커피'], icon: '☕' },
-  { keywords: ['음식', '식비', '밥', '식사'], icon: '🍽️' },
-  { keywords: ['교통', '버스', '지하철', '택시'], icon: '🚌' },
-  { keywords: ['쇼핑', '옷'], icon: '🛍️' },
-  { keywords: ['구독', '넷플릭스'], icon: '📋' },
-  { keywords: ['병원', '의료', '약'], icon: '🏥' },
-  { keywords: ['운동', '헬스'], icon: '🏋️' },
-  { keywords: ['여행', '숙박'], icon: '✈️' },
-  { keywords: ['교육', '학원', '책'], icon: '📚' },
-  { keywords: ['기타'], icon: '···' },
-];
-
-function getIcon(name: string): string {
-  const lower = name.toLowerCase();
-  for (const entry of ICON_MAP) {
-    if (entry.keywords.some(kw => lower.includes(kw))) return entry.icon;
-  }
-  return '🏷️';
-}
 
 interface CategoryEditModalProps {
   visible: boolean;
@@ -93,7 +72,7 @@ export default function CategoryEditModal({
               categories.map(cat => (
                 <View key={cat.id} style={styles.listItem}>
                   <View style={[styles.chip, { backgroundColor: cat.color + '33' }]}>
-                    <Text style={styles.chipIcon}>{getIcon(cat.name)}</Text>
+                    <Text style={styles.chipIcon}>{getCategoryEmoji(cat.name)}</Text>
                     <Text style={[styles.chipText, { color: cat.color }]}>{cat.name}</Text>
                   </View>
                   <TouchableOpacity
