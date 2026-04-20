@@ -3,12 +3,12 @@
 
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List
 from groq import Groq
-from database import supabase, get_supabase_with_token
+from database import supabase, get_supabase_with_token  # get_supabase_with_token: goal-advice에서 사용
 import os
 from dotenv import load_dotenv
-from graph_rag import CaslowGraphRAG
+from graph_rag import graph_rag
 
 load_dotenv()
 
@@ -30,7 +30,8 @@ def get_user_id(authorization: str) -> str:
         token = authorization.replace("Bearer ", "")
         user = supabase.auth.get_user(token)
         return user.user.id
-    except:
+    except Exception as e:
+        print(f"⚠️ 인증 실패: {e}")
         raise HTTPException(status_code=401, detail="인증이 필요합니다.")
 
 # ✅ AI 채팅 (POST /chat)
@@ -38,43 +39,10 @@ def get_user_id(authorization: str) -> str:
 def chat(request: ChatRequest, authorization: str = Header(...)):
     """유저 메시지를 GraphRAG로 탐색 후 Groq API로 전송"""
     user_id = get_user_id(authorization)
-    token = authorization.replace("Bearer ", "")
-    authed_supabase = get_supabase_with_token(token)
 
-    # 이번 달 지출 데이터 가져오기
-    from datetime import date
-    today = date.today()
-    first_day = today.replace(day=1)
-
-    expenses = authed_supabase.table("expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .gte("date", str(first_day)) \
-        .execute()
-
-    # 목표 데이터 가져오기
-    goals = authed_supabase.table("goals") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    # 정기 지출 데이터 가져오기
-    recurring = authed_supabase.table("recurring_expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    # GraphRAG 그래프 구성
-    rag = CaslowGraphRAG()
-    rag.build_graph(
-        expenses=expenses.data or [],
-        goals=goals.data or [],
-        recurring=recurring.data or [],
-    )
-
-    # 유저 마지막 질문으로 관련 노드 탐색
+    # 유저 마지막 질문으로 Neo4j에서 관련 노드 탐색 (유저 데이터만)
     last_message = request.messages[-1].content if request.messages else ""
-    graph_context = rag.search(last_message)
+    graph_context = graph_rag.search(last_message, user_id) if graph_rag else ""
 
     # 시스템 프롬프트에 GraphRAG 컨텍스트 포함
     system_prompt = f"""당신은 Caslow의 AI 재무 관리 어시스턴트입니다.
@@ -105,42 +73,15 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
 def get_insight(authorization: str = Header(...)):
     """GraphRAG 기반 AI 인사이트 생성"""
     user_id = get_user_id(authorization)
-    token = authorization.replace("Bearer ", "")
-    authed_supabase = get_supabase_with_token(token)
 
-    from datetime import date
-    today = date.today()
-    first_day = today.replace(day=1)
+    if not graph_rag:
+        return {"insight": "AI 분석을 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해주세요."}
 
-    expenses = authed_supabase.table("expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .gte("date", str(first_day)) \
-        .execute()
+    # Neo4j에서 지출 패턴 탐색 (유저 데이터만)
+    graph_context = graph_rag.search("지출 패턴 분석 절약", user_id)
 
-    goals = authed_supabase.table("goals") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    recurring = authed_supabase.table("recurring_expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    if not expenses.data:
+    if not graph_context:
         return {"insight": "이번 달 지출 내역이 없어요. 지출을 입력하면 AI가 분석해드릴게요! 😊"}
-
-    # GraphRAG 그래프 구성
-    rag = CaslowGraphRAG()
-    rag.build_graph(
-        expenses=expenses.data or [],
-        goals=goals.data or [],
-        recurring=recurring.data or [],
-    )
-
-    # 전체 요약 컨텍스트 가져오기
-    graph_context = rag.search("지출 패턴 분석 절약")
 
     # Groq API로 인사이트 생성
     response = groq_client.chat.completions.create(
@@ -169,8 +110,7 @@ def get_insight(authorization: str = Header(...)):
 def get_goal_advice(goal_id: str, authorization: str = Header(...)):
     """GraphRAG 기반 목표 AI 조언 생성"""
     user_id = get_user_id(authorization)
-    token = authorization.replace("Bearer ", "")
-    authed_supabase = get_supabase_with_token(token)
+    authed_supabase = get_supabase_with_token(authorization.replace("Bearer ", ""))
 
     # 목표 데이터 가져오기
     goal = authed_supabase.table("goals") \
@@ -185,33 +125,8 @@ def get_goal_advice(goal_id: str, authorization: str = Header(...)):
     goal_data = goal.data[0]
     percent = round((goal_data["current_amount"] / goal_data["target_amount"]) * 100) if goal_data["target_amount"] > 0 else 0
 
-    # 이번 달 지출 데이터 가져오기
-    from datetime import date
-    today = date.today()
-    first_day = today.replace(day=1)
-
-    expenses = authed_supabase.table("expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .gte("date", str(first_day)) \
-        .execute()
-
-    # 정기 지출 데이터 가져오기
-    recurring = authed_supabase.table("recurring_expenses") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    # GraphRAG 그래프 구성
-    rag = CaslowGraphRAG()
-    rag.build_graph(
-        expenses=expenses.data or [],
-        goals=[goal_data],
-        recurring=recurring.data or [],
-    )
-
-    # 목표 관련 컨텍스트 탐색
-    graph_context = rag.search(f"목표 {goal_data['title']} 저축 달성 패턴")
+    # Neo4j에서 목표 관련 컨텍스트 탐색 (유저 데이터만)
+    graph_context = graph_rag.search(f"목표 {goal_data['title']} 저축 달성 패턴", user_id) if graph_rag else ""
 
     # Groq API로 조언 생성
     response = groq_client.chat.completions.create(
