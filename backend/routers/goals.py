@@ -4,8 +4,7 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
 from database import supabase, get_supabase_with_token
-from pydantic import BaseModel
-from typing import Optional
+from graph_rag import CaslowGraphRAG  # Neo4j 연동 추가
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -14,6 +13,14 @@ class GoalCreate(BaseModel):
     title: str
     target_amount: int
     type: str
+    deadline: Optional[str] = None
+
+# 목표 수정 데이터 타입
+class GoalUpdate(BaseModel):
+    title: Optional[str] = None
+    target_amount: Optional[int] = None
+    current_amount: Optional[int] = None
+    type: Optional[str] = None
     deadline: Optional[str] = None
 
 def get_user_id(authorization: str) -> str:
@@ -42,7 +49,7 @@ def get_goals(authorization: str = Header(...)):
 # ✅ 목표 추가 (POST /goals)
 @router.post("/")
 def create_goal(goal: GoalCreate, authorization: str = Header(...)):
-    """새로운 목표 추가"""
+    """새로운 목표 추가 후 Neo4j에도 동기화"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
     authed_supabase = get_supabase_with_token(token)
@@ -57,40 +64,22 @@ def create_goal(goal: GoalCreate, authorization: str = Header(...)):
     }
 
     response = authed_supabase.table("goals").insert(data).execute()
-    return response.data[0]
+    saved = response.data[0]
 
-# ✅ 목표 삭제 (DELETE /goals/{id})
-@router.delete("/{goal_id}")
-def delete_goal(goal_id: str, authorization: str = Header(...)):
-    """목표 삭제"""
-    user_id = get_user_id(authorization)
-    token = authorization.replace("Bearer ", "")
-    authed_supabase = get_supabase_with_token(token)
+    # Neo4j에 목표 노드 동기화
+    try:
+        rag = CaslowGraphRAG()
+        rag.sync_goal(saved)
+        rag.close()
+    except Exception as e:
+        print(f"⚠️ Neo4j 동기화 실패 (목표 생성): {e}")
 
-    response = authed_supabase.table("goals") \
-        .delete() \
-        .eq("id", goal_id) \
-        .eq("user_id", user_id) \
-        .execute()
-
-    if not response.data:
-        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
-
-    return {"message": "삭제되었습니다."}
-
-
-# 목표 수정 데이터 타입
-class GoalUpdate(BaseModel):
-    title: Optional[str] = None
-    target_amount: Optional[int] = None
-    current_amount: Optional[int] = None
-    type: Optional[str] = None
-    deadline: Optional[str] = None
+    return saved
 
 # ✅ 목표 수정 (PUT /goals/{id})
 @router.put("/{goal_id}")
 def update_goal(goal_id: str, goal: GoalUpdate, authorization: str = Header(...)):
-    """목표 수정"""
+    """목표 수정 후 Neo4j에도 동기화"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
     authed_supabase = get_supabase_with_token(token)
@@ -107,6 +96,41 @@ def update_goal(goal_id: str, goal: GoalUpdate, authorization: str = Header(...)
     if not response.data:
         raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
 
-    return response.data[0]
+    updated = response.data[0]
 
+    # Neo4j에 수정된 목표 노드 동기화
+    try:
+        rag = CaslowGraphRAG()
+        rag.sync_goal(updated)
+        rag.close()
+    except Exception as e:
+        print(f"⚠️ Neo4j 동기화 실패 (목표 수정): {e}")
 
+    return updated
+
+# ✅ 목표 삭제 (DELETE /goals/{id})
+@router.delete("/{goal_id}")
+def delete_goal(goal_id: str, authorization: str = Header(...)):
+    """목표 삭제 후 Neo4j에서도 제거"""
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    response = authed_supabase.table("goals") \
+        .delete() \
+        .eq("id", goal_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    if not response.data:
+        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
+
+    # Neo4j에서도 목표 노드 삭제
+    try:
+        rag = CaslowGraphRAG()
+        rag.delete_goal(goal_id)
+        rag.close()
+    except Exception as e:
+        print(f"⚠️ Neo4j 동기화 실패 (목표 삭제): {e}")
+
+    return {"message": "삭제되었습니다."}

@@ -145,9 +145,10 @@ class CaslowGraphRAG:
     # 질문 기반 노드 탐색 → 컨텍스트 생성
     # ────────────────────────────────────────
 
-    def search(self, query: str) -> str:
+    def search(self, query: str, user_id: str = "") -> str:
         """
         질문 키워드 기반으로 Neo4j에서 관련 노드 탐색 후 컨텍스트 생성
+        user_id를 전달하면 해당 유저 데이터만 탐색
         """
         context_parts = []
         q = query.lower()
@@ -156,13 +157,14 @@ class CaslowGraphRAG:
         if any(kw in q for kw in ['지출', '썼', '얼마', '내역', '소비', '샀']):
             rows = self._run("""
                 MATCH (e:Expense)-[:BELONGS_TO]->(c:Category)
+                WHERE $user_id = '' OR e.user_id = $user_id
                 RETURN e.date    AS date,
                        e.title   AS title,
                        c.name    AS category,
                        e.amount  AS amount
                 ORDER BY e.date DESC
                 LIMIT 10
-            """)
+            """, {"user_id": user_id})
             for r in rows:
                 context_parts.append(
                     f"[지출] {r['date']} {r['title']} "
@@ -172,11 +174,12 @@ class CaslowGraphRAG:
         # ── 패턴/과소비 관련 질문 ──
         if any(kw in q for kw in ['패턴', '분석', '많이', '과소비', '줄이', '절약']):
             rows = self._run("""
-                MATCH (c:Category)-[:HAS_PATTERN]->(p:Pattern)
+                MATCH (e:Expense)-[:BELONGS_TO]->(c:Category)-[:HAS_PATTERN]->(p:Pattern)
+                WHERE $user_id = '' OR e.user_id = $user_id
                 RETURN p.name   AS name,
                        p.amount AS amount,
                        p.ratio  AS ratio
-            """)
+            """, {"user_id": user_id})
             for r in rows:
                 context_parts.append(
                     f"[패턴] {r['name']}: {r['amount']:,}원 "
@@ -187,12 +190,13 @@ class CaslowGraphRAG:
         if any(kw in q for kw in ['목표', '저축', '달성', '남았', '얼마나']):
             rows = self._run("""
                 MATCH (g:Goal)
+                WHERE $user_id = '' OR g.user_id = $user_id
                 RETURN g.title          AS title,
                        g.current_amount AS current,
                        g.target_amount  AS target,
                        g.percent        AS percent,
                        g.deadline       AS deadline
-            """)
+            """, {"user_id": user_id})
             for r in rows:
                 context_parts.append(
                     f"[목표] {r['title']}: "
@@ -204,11 +208,12 @@ class CaslowGraphRAG:
         if any(kw in q for kw in ['정기', '구독', '고정', '월세', '매월']):
             rows = self._run("""
                 MATCH (r:Recurring)-[:RECURS_MONTHLY]->(c:Category)
+                WHERE $user_id = '' OR r.user_id = $user_id
                 RETURN r.title        AS title,
                        r.amount       AS amount,
                        r.day_of_month AS day,
                        c.name         AS category
-            """)
+            """, {"user_id": user_id})
             for r in rows:
                 context_parts.append(
                     f"[정기지출] {r['title']} ({r['category']}): "
@@ -217,7 +222,7 @@ class CaslowGraphRAG:
 
         # ── 컨텍스트 없으면 전체 요약 반환 ──
         if not context_parts:
-            context_parts = self._get_summary()
+            context_parts = self._get_summary(user_id)
 
         return "\n".join(context_parts[:20])  # 최대 20개
 
@@ -225,15 +230,16 @@ class CaslowGraphRAG:
     # 전체 요약
     # ────────────────────────────────────────
 
-    def _get_summary(self) -> list:
+    def _get_summary(self, user_id: str = "") -> list:
         """전체 지출 요약 반환"""
         summary = []
 
         # 총 지출
         total_row = self._run("""
             MATCH (e:Expense)
+            WHERE $user_id = '' OR e.user_id = $user_id
             RETURN sum(e.amount) AS total
-        """)
+        """, {"user_id": user_id})
         total = total_row[0]['total'] if total_row else 0
 
         if total:
@@ -242,10 +248,11 @@ class CaslowGraphRAG:
             # 카테고리별 합계
             cat_rows = self._run("""
                 MATCH (e:Expense)-[:BELONGS_TO]->(c:Category)
-                RETURN c.name       AS category,
+                WHERE $user_id = '' OR e.user_id = $user_id
+                RETURN c.name        AS category,
                        sum(e.amount) AS amount
                 ORDER BY amount DESC
-            """)
+            """, {"user_id": user_id})
             for r in cat_rows:
                 summary.append(f"  - {r['category']}: {r['amount']:,}원")
 
@@ -266,7 +273,8 @@ class CaslowGraphRAG:
                 e.amount   = $amount,
                 e.category = $category,
                 e.date     = $date,
-                e.memo     = $memo
+                e.memo     = $memo,
+                e.user_id  = $user_id
 
             MERGE (c:Category {name: $category})
             MERGE (d:DateNode {month: $month})
@@ -280,6 +288,7 @@ class CaslowGraphRAG:
             "date":     str(expense.get('date', '')),
             "memo":     expense.get('memo', ''),
             "month":    month,
+            "user_id":  str(expense.get('user_id', '')),
         })
 
     def delete_expense(self, expense_id: str):
@@ -299,3 +308,76 @@ try:
 except Exception as e:
     print(f"⚠️ Neo4j 초기화 실패: {e}")
     graph_rag = None
+    
+def sync_goal(self, goal: dict):
+    """
+    목표 노드 추가/업데이트
+    목표 생성/수정 시 호출
+    """
+    percent = round(
+        (goal.get('current_amount', 0) / goal.get('target_amount', 1)) * 100
+    )
+    self._run("""
+        MERGE (g:Goal {id: $id})
+        SET g.title          = $title,
+            g.target_amount  = $target_amount,
+            g.current_amount = $current_amount,
+            g.percent        = $percent,
+            g.deadline       = $deadline
+
+        WITH g
+        WHERE $percent < 50
+        MATCH (p:Pattern)
+        MERGE (p)-[:EXCEEDS_BUDGET]->(g)
+    """, {
+        "id":             str(goal['id']),
+        "title":          goal.get('title', ''),
+        "target_amount":  goal.get('target_amount', 0),
+        "current_amount": goal.get('current_amount', 0),
+        "percent":        percent,
+        "deadline":       str(goal.get('deadline', '')),
+    })
+
+def delete_goal(self, goal_id: str):
+    """
+    목표 노드 삭제
+    목표 삭제 시 호출
+    """
+    self._run("""
+        MATCH (g:Goal {id: $id})
+        DETACH DELETE g
+    """, {"id": str(goal_id)})
+    
+def sync_recurring(self, recurring: dict):
+    """
+    정기 지출 노드 추가/업데이트
+    정기 지출 생성 시 호출
+    """
+    self._run("""
+        MERGE (r:Recurring {id: $id})
+        SET r.title        = $title,
+            r.amount       = $amount,
+            r.category     = $category,
+            r.day_of_month = $day_of_month
+
+        MERGE (c:Category {name: $category})
+        MERGE (r)-[:RECURS_MONTHLY]->(c)
+    """, {
+        "id":           str(recurring['id']),
+        "title":        recurring.get('title', ''),
+        "amount":       recurring.get('amount', 0),
+        "category":     recurring.get('category', '기타'),
+        "day_of_month": recurring.get('day_of_month', 1),
+    })
+
+def delete_recurring(self, recurring_id: str):
+    """
+    정기 지출 노드 삭제
+    정기 지출 삭제 시 호출
+    """
+    self._run("""
+        MATCH (r:Recurring {id: $id})
+        DETACH DELETE r
+    """, {"id": str(recurring_id)})
+    
+    
