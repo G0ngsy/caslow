@@ -63,7 +63,7 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
         model="llama-3.3-70b-versatile",
         messages=messages,
         max_tokens=1000,
-        temperature=0.7,
+        temperature=0.3,
     )
 
     return {"message": response.choices[0].message.content}
@@ -99,7 +99,7 @@ def get_insight(authorization: str = Header(...)):
             }
         ],
         max_tokens=300,
-        temperature=0.7,
+        temperature=0.3,
     )
 
     return {"insight": response.choices[0].message.content}
@@ -155,7 +155,7 @@ GraphRAG 분석 결과:
             }
         ],
         max_tokens=300,
-        temperature=0.7,
+        temperature=0.3,
     )
 
     return {"advice": response.choices[0].message.content}
