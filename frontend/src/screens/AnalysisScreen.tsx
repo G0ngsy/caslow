@@ -1,6 +1,7 @@
 import { PieChart, LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
+import { categoryConfig } from '../constants/categories';
 import Header from '../components/Header';
 import { useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -14,26 +15,6 @@ const Y_AXIS_WIDTH = 36;
 const END_SPACING = 8;
 // 카드 margin(16*2) + padding(20*2) + yAxis + endSpacing 모두 제외
 const lineChartWidth = screenWidth - 32 - 40 - Y_AXIS_WIDTH - END_SPACING;
-
-// 카테고리 색상 매핑
-const categoryColors: Record<string, string> = {
-  cafe:         '#A78BFA',
-  food:         '#F59E0B',
-  transport:    '#3B82F6',
-  shopping:     '#EC4899',
-  subscription: '#10B981',
-  etc:          '#6B7280',
-};
-
-// 카테고리 한글명 매핑
-const categoryLabels: Record<string, string> = {
-  cafe:         '카페',
-  food:         '음식',
-  transport:    '교통',
-  shopping:     '쇼핑',
-  subscription: '구독',
-  etc:          '기타',
-};
 
 // 월 표시 형식 변환 (2026-04 → 4월)
 function formatMonth(month: string): string {
@@ -80,13 +61,16 @@ export default function AnalysisScreen() {
       getCategories(),
     ]);
 
-    // 카테고리 데이터 변환
-    const formattedCategory = categoryRes.map((item: any) => ({
-      name: categoryLabels[item.category] || item.category,
-      amount: item.amount,
-      color: categoryColors[item.category] || '#6B7280',
-      key: item.category,
-    }));
+    // 카테고리 데이터 변환 (categories.ts 공통 설정 사용)
+    const formattedCategory = categoryRes.map((item: any) => {
+      const cfg = categoryConfig[item.category];
+      return {
+        name: cfg?.label || item.category,
+        amount: item.amount,
+        color: cfg?.color || '#6B7280',
+        key: item.category,
+      };
+    });
     setCategoryData(formattedCategory);
 
     // 월별 데이터 변환

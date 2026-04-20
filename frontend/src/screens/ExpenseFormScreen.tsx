@@ -7,27 +7,7 @@ import Button from '../components/Button';
 import { useNavigation, useRoute, useFocusEffect  } from '@react-navigation/native';
 import { createExpense, updateExpense,getCategories  } from '../lib/api';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-
-
-// 카테고리 아이콘 매핑 함수
-function getCategoryIcon(name: string): string {
-  const map: Record<string, string> = {
-    '카페': 'cafe',
-    '음식': 'restaurant',
-    '교통': 'bus',
-    '쇼핑': 'bag',
-    '구독': 'tv',
-    '기타': 'ellipsis-horizontal',
-    'cafe': 'cafe',
-    'food': 'restaurant',
-    'transport': 'bus',
-    'shopping': 'bag',
-    'subscription': 'tv',
-    'etc': 'ellipsis-horizontal',
-  };
-  return map[name] || 'pricetag';
-}
+import { getCategoryIcon } from '../constants/categories';
 
 // 키워드 기반 카테고리 추천
 function suggestCategory(memo: string): string {

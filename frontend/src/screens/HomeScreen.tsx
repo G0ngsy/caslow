@@ -7,46 +7,7 @@ import { getExpenses, getBudget , getCategories  } from '../lib/api';
 import { useNavigation } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-
-// 카테고리별 아이콘 및 색상
-const categoryConfig: Record<string, { icon: string; color: string; label: string }> = {
-  cafe:         { icon: 'cafe',                color: '#A78BFA', label: '카페' },
-  food:         { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
-  transport:    { icon: 'bus',                 color: '#3B82F6', label: '교통' },
-  shopping:     { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
-  subscription: { icon: 'tv',                  color: '#10B981', label: '구독' },
-  '카페':       { icon: 'cafe',                color: '#A78BFA', label: '카페' },
-  '음식':       { icon: 'restaurant',          color: '#F59E0B', label: '음식' },
-  '교통':       { icon: 'bus',                 color: '#3B82F6', label: '교통' },
-  '쇼핑':       { icon: 'bag',                 color: '#EC4899', label: '쇼핑' },
-  '구독':       { icon: 'tv',                  color: '#10B981', label: '구독' },
-  '기타':       { icon: 'ellipsis-horizontal', color: '#6B7280', label: '기타' },
-  default:      { icon: 'card',                color: '#6B7280', label: '기타' },
-};
-
-// 카테고리 필터 목록
-// 카테고리 이름으로 아이콘 반환
-function getCategoryIcon(name: string): string {
-  const map: Record<string, string> = {
-    '카페': 'cafe',
-    '음식': 'restaurant',
-    '교통': 'bus',
-    '쇼핑': 'bag',
-    '구독': 'tv',
-    '기타': 'ellipsis-horizontal',
-  };
-  return map[name] || 'pricetag';
-}
-
-// 한글/영문 카테고리 매핑
-const categoryKeyMap: Record<string, string[]> = {
-  '카페': ['카페', 'cafe'],
-  '음식': ['음식', 'food'],
-  '교통': ['교통', 'transport'],
-  '쇼핑': ['쇼핑', 'shopping'],
-  '구독': ['구독', 'subscription'],
-  '기타': ['기타', 'etc'],
-};
+import { categoryConfig, getCategoryIcon, categoryKeyMap } from '../constants/categories';
 
 // 재테크 명언 목록
 const quotes = [
