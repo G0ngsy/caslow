@@ -6,19 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from routers import expenses,goals,categories,recurring,budget,chat,ocr,excel,profiles,slack,auth,email_alert
 from scheduler import start_scheduler, scheduler
-from graph_rag import CaslowGraphRAG  # Neo4j 연결 확인용
+from graph_rag import graph_rag  # 싱글톤 import 시 자동 연결 시도
 
 
 # 앱 시작/종료 시 실행되는 함수
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Neo4j 연결 확인
-    try:
-        rag = CaslowGraphRAG()
-        rag.close()
+    # graph_rag 싱글톤이 import 시 이미 연결 시도함
+    if graph_rag:
         print("✅ Neo4j 연결 성공!")
-    except Exception as e:
-        print(f"❌ Neo4j 연결 실패: {e}")
+    else:
+        print("❌ Neo4j 연결 실패 - 지출/목표 기능은 정상 동작합니다.")
     # 서버 시작할 때 스케줄러 시작
     start_scheduler()
     yield
