@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Platform, ScrollView } from 'react-native';
 import { useState, useEffect } from 'react';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 
@@ -28,6 +29,7 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
   const [currentAmount, setCurrentAmount] = useState('');
   const [selectedType, setSelectedType] = useState('저축');
   const [deadline, setDeadline] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     if (goal) {
@@ -136,12 +138,27 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
                   onChange={(e: any) => setDeadline(e.target.value)}
                 />
               ) : (
-                <TouchableOpacity style={styles.dateButton}>
-                  <Text style={[styles.dateText, !deadline && { color: Colors.textHint }]}>
-                    {deadline || '기한 선택'}
-                  </Text>
-                  <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+                    <Text style={[styles.dateText, !deadline && { color: Colors.textHint }]}>
+                      {deadline || '기한 선택'}
+                    </Text>
+                    <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={deadline ? new Date(deadline) : new Date()}
+                      mode="date"
+                      display="default"
+                      onChange={(_, selected) => {
+                        setShowDatePicker(false);
+                        if (selected) {
+                          setDeadline(selected.toISOString().split('T')[0]);
+                        }
+                      }}
+                    />
+                  )}
+                </>
               )}
             </View>
 
