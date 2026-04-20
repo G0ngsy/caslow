@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -629,12 +630,27 @@ const handleSaveEdit = async (updatedGoal: any) => {
                 onChange={(e: any) => setDeadline(e.target.value)}
               />
             ) : (
-              <TouchableOpacity style={styles.dateButton}>
-                <Text style={[styles.dateText, !deadline && { color: Colors.textHint }]}>
-                  {deadline || '기한 선택'}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+                  <Text style={[styles.dateText, !deadline && { color: Colors.textHint }]}>
+                    {deadline || '기한 선택'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={deadline ? new Date(deadline) : new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(_, selected) => {
+                      setShowDatePicker(false);
+                      if (selected) {
+                        setDeadline(selected.toISOString().split('T')[0]);
+                      }
+                    }}
+                  />
+                )}
+              </>
             )}
 
             {/* 저장 버튼 */}
