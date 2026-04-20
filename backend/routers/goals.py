@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
 from database import supabase, get_supabase_with_token
-from graph_rag import CaslowGraphRAG  # Neo4j 연동 추가
+from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
 
 router = APIRouter(prefix="/goals", tags=["goals"])
 
@@ -67,12 +67,11 @@ def create_goal(goal: GoalCreate, authorization: str = Header(...)):
     saved = response.data[0]
 
     # Neo4j에 목표 노드 동기화
-    try:
-        rag = CaslowGraphRAG()
-        rag.sync_goal(saved)
-        rag.close()
-    except Exception as e:
-        print(f"⚠️ Neo4j 동기화 실패 (목표 생성): {e}")
+    if graph_rag:
+        try:
+            graph_rag.sync_goal(saved)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (목표 생성): {e}")
 
     return saved
 
@@ -99,12 +98,11 @@ def update_goal(goal_id: str, goal: GoalUpdate, authorization: str = Header(...)
     updated = response.data[0]
 
     # Neo4j에 수정된 목표 노드 동기화
-    try:
-        rag = CaslowGraphRAG()
-        rag.sync_goal(updated)
-        rag.close()
-    except Exception as e:
-        print(f"⚠️ Neo4j 동기화 실패 (목표 수정): {e}")
+    if graph_rag:
+        try:
+            graph_rag.sync_goal(updated)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (목표 수정): {e}")
 
     return updated
 
@@ -126,11 +124,10 @@ def delete_goal(goal_id: str, authorization: str = Header(...)):
         raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
 
     # Neo4j에서도 목표 노드 삭제
-    try:
-        rag = CaslowGraphRAG()
-        rag.delete_goal(goal_id)
-        rag.close()
-    except Exception as e:
-        print(f"⚠️ Neo4j 동기화 실패 (목표 삭제): {e}")
+    if graph_rag:
+        try:
+            graph_rag.delete_goal(goal_id)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (목표 삭제): {e}")
 
     return {"message": "삭제되었습니다."}
