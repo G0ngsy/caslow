@@ -6,6 +6,7 @@ from database import supabase, get_supabase_with_token
 from models.expense import ExpenseCreate, ExpenseUpdate
 from datetime import date, datetime
 from collections import defaultdict
+from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
 
 # 라우터 생성 - /expenses 경로로 시작하는 API들을 모아요
 router = APIRouter(prefix="/expenses", tags=["expenses"])
@@ -20,7 +21,8 @@ def get_user_id(authorization: str) -> str:
         token = authorization.replace("Bearer ", "")
         user = supabase.auth.get_user(token)
         return user.user.id
-    except:
+    except Exception as e:
+        print(f"⚠️ 인증 실패: {e}")
         raise HTTPException(status_code=401, detail="인증이 필요합니다.")
 
 
@@ -46,14 +48,12 @@ def get_expenses(authorization: str = Header(...)):
 # ✅ 지출 생성 (POST /expenses)
 @router.post("/")
 def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
-    """새로운 지출 항목을 추가"""
+    """새로운 지출 항목을 추가하고 Neo4j에도 동기화"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
-
-    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
     authed_supabase = get_supabase_with_token(token)
 
-    # 저장할 데이터 준비
+    # Supabase에 저장
     data = {
         "user_id": user_id,
         "title": expense.title,
@@ -62,25 +62,30 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
         "memo": expense.memo,
         "date": str(expense.date),
     }
-
     response = authed_supabase.table("expenses").insert(data).execute()
-    return response.data[0]
+    if not response.data:
+        raise HTTPException(status_code=500, detail="지출 저장에 실패했습니다.")
+    saved = response.data[0]
 
+    # Neo4j에 지출 노드 동기화 (전체 재구성 없이 해당 노드만 추가)
+    if graph_rag:
+        try:
+            graph_rag.sync_expense(saved)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (지출 생성): {e}")
+
+    return saved
 
 # ✅ 지출 수정 (PUT /expenses/{id})
 @router.put("/{expense_id}")
 def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str = Header(...)):
-    """특정 지출 항목 수정"""
+    """특정 지출 항목 수정 후 Neo4j에도 동기화"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
-
-    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
     authed_supabase = get_supabase_with_token(token)
 
     # None이 아닌 값만 업데이트
     data = {k: v for k, v in expense.dict().items() if v is not None}
-
-    # date는 문자열로 변환
     if "date" in data:
         data["date"] = str(data["date"])
 
@@ -93,7 +98,16 @@ def update_expense(expense_id: str, expense: ExpenseUpdate, authorization: str =
     if not response.data:
         raise HTTPException(status_code=404, detail="지출 항목을 찾을 수 없습니다.")
 
-    return response.data[0]
+    updated = response.data[0]
+
+    # Neo4j에 수정된 노드 동기화 (MERGE로 덮어쓰기)
+    if graph_rag:
+        try:
+            graph_rag.sync_expense(updated)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (지출 수정): {e}")
+
+    return updated
 
 # ✅ 메모 기준 지출 삭제 (DELETE /expenses/by-memo)
 @router.delete("/by-memo")
@@ -109,16 +123,22 @@ def delete_expenses_by_memo(memo: str, authorization: str = Header(...)):
         .like("memo", f"%{memo}%") \
         .execute()
 
+    # Neo4j에서도 해당 지출들 삭제
+    if graph_rag:
+        try:
+            for item in response.data:
+                graph_rag.delete_expense(str(item['id']))
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (메모 기준 삭제): {e}")
+
     return {"message": "삭제되었습니다.", "count": len(response.data)}
 
 # ✅ 지출 삭제 (DELETE /expenses/{id})
 @router.delete("/{expense_id}")
 def delete_expense(expense_id: str, authorization: str = Header(...)):
-    """특정 지출 항목 삭제"""
+    """특정 지출 항목 삭제 후 Neo4j에서도 제거"""
     user_id = get_user_id(authorization)
     token = authorization.replace("Bearer ", "")
-
-    # 유저 토큰으로 인증된 클라이언트 사용 (RLS 통과)
     authed_supabase = get_supabase_with_token(token)
 
     response = authed_supabase.table("expenses") \
@@ -129,6 +149,13 @@ def delete_expense(expense_id: str, authorization: str = Header(...)):
 
     if not response.data:
         raise HTTPException(status_code=404, detail="지출 항목을 찾을 수 없습니다.")
+
+    # Neo4j에서도 해당 노드 삭제
+    if graph_rag:
+        try:
+            graph_rag.delete_expense(expense_id)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (지출 삭제): {e}")
 
     return {"message": "삭제되었습니다."}
 
