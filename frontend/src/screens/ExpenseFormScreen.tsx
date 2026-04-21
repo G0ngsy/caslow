@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert, KeyboardAvoidingView } from 'react-native';
 import { useCallback, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -245,7 +245,10 @@ export default function ExpenseFormScreen() {
 };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <Header
         title={isEditMode ? '지출 수정' : ocrData ? 'OCR 자동 입력' : '지출 입력'}
         showBack
@@ -383,6 +386,6 @@ export default function ExpenseFormScreen() {
           <Button title={isEditMode ? '수정하기' : '저장하기'} onPress={handleSave} />
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
+
 import { useState, useEffect } from 'react';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,6 +56,7 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
 
   return (
     <Modal visible={visible} transparent animationType="fade">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableOpacity style={styles.overlay} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} style={styles.card}>
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -157,6 +159,7 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
           </ScrollView>
         </TouchableOpacity>
       </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { Category } from './CategoryEditModal';
 
@@ -58,6 +58,7 @@ export default function RecurringModal({ visible, categories, onAdd, onClose }: 
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={handleClose}>
         <TouchableOpacity activeOpacity={1} style={styles.box}>
           <View style={styles.header}>
@@ -133,6 +134,7 @@ export default function RecurringModal({ visible, categories, onAdd, onClose }: 
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

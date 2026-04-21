@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical:10,
+    paddingVertical: 10,
     backgroundColor: Colors.white,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
@@ -170,18 +170,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F4F8',
     borderRadius: 22,
     paddingHorizontal: 16,
-    
-    /* 텍스트 위치 조절 핵심 */
-    paddingTop: 17,        // 위쪽 공간을 충분히 줌 (글자를 아래로 밀어냄)
-    paddingBottom: 0,     // 아래쪽 공간도 맞춰서 균형 유지
-    
+    paddingTop: 11,
+    paddingBottom: 11,
     fontSize: 14,
     color: Colors.textDark,
-    
-    /* 높이 및 정렬 설정 */
-    minHeight: 40,         // 전체적인 높이를 버튼(38~40)과 비슷하게 유지
-    textAlignVertical: 'center', // 안드로이드에서 텍스트 수직 중앙 정렬 보조
-    includeFontPadding: false,   // 안드로이드 폰트 기본 상단 여백 제거
+    minHeight: 40,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   sendBtn: {
     width: 38,
@@ -256,7 +251,11 @@ export default function ChatScreen() {
   }
 }
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
       {/* 헤더 */}
       <View style={styles.header}>
       {/* 뒤로가기 버튼 */}
@@ -331,30 +330,25 @@ export default function ChatScreen() {
       </View>
 
       {/* 입력창 */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={80}
-      >
-        <View style={styles.inputRow}>
-          <TextInput
-            style={styles.input}
-            value={input}
-            onChangeText={setInput}
-            placeholder="질문을 입력하세요..."
-            placeholderTextColor={Colors.textHint}
-            multiline
-            onSubmitEditing={() => sendMessage(input)}
-          />
-          <TouchableOpacity
-            style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
-            onPress={() => sendMessage(input)}
-            disabled={!input.trim()}
-          >
-            <Ionicons name="send" size={18} color={Colors.white} />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </View>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          value={input}
+          onChangeText={setInput}
+          placeholder="질문을 입력하세요..."
+          placeholderTextColor={Colors.textHint}
+          multiline
+          onSubmitEditing={() => sendMessage(input)}
+        />
+        <TouchableOpacity
+          style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
+          onPress={() => sendMessage(input)}
+          disabled={!input.trim()}
+        >
+          <Ionicons name="send" size={18} color={Colors.white} />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 

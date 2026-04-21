@@ -5,7 +5,7 @@ import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email as SendGridEmail
 from groq import Groq
-from database import supabase, supabase_admin
+from database import supabase_admin
 from collections import defaultdict
 from datetime import date, timedelta
 from dotenv import load_dotenv
@@ -54,8 +54,8 @@ def send_daily_email_advice():
         if not user_email:
             continue
 
-        # 유저별 어제 지출 조회
-        response = supabase.table("expenses") \
+        # 유저별 어제 지출 조회 (RLS 우회를 위해 admin 클라이언트 사용)
+        response = supabase_admin.table("expenses") \
             .select("*") \
             .eq("user_id", user_id) \
             .gte("date", yesterday) \
