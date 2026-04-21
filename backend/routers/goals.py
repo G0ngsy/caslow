@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime, timezone
 from database import supabase, get_supabase_with_token
 from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
 
@@ -131,3 +132,109 @@ def delete_goal(goal_id: str, authorization: str = Header(...)):
             print(f"⚠️ Neo4j 동기화 실패 (목표 삭제): {e}")
 
     return {"message": "삭제되었습니다."}
+
+
+# ── 저축 입금 내역 ──────────────────────────────────────────
+
+# 입금 내역 생성 데이터 타입
+class DepositCreate(BaseModel):
+    amount: int        # 입금 금액
+    note: Optional[str] = None  # 메모 (선택)
+    date: Optional[str] = None  # 날짜 (없으면 오늘)
+
+# ✅ 입금 내역 조회 (GET /goals/{id}/deposits)
+# 해당 목표의 날짜 역순 입금 내역 반환
+@router.get("/{goal_id}/deposits")
+def get_deposits(goal_id: str, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 내 목표인지 확인
+    goal_check = authed_supabase.table("goals").select("id").eq("id", goal_id).eq("user_id", user_id).execute()
+    if not goal_check.data:
+        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
+
+    response = authed_supabase.table("goal_deposits") \
+        .select("*") \
+        .eq("goal_id", goal_id) \
+        .order("date", desc=True) \
+        .execute()
+
+    return response.data
+
+# ✅ 입금 추가 (POST /goals/{id}/deposits)
+# 입금 내역 저장 후 목표의 current_amount 자동 합산
+@router.post("/{goal_id}/deposits")
+def add_deposit(goal_id: str, deposit: DepositCreate, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 내 목표인지 확인
+    goal_res = authed_supabase.table("goals").select("*").eq("id", goal_id).eq("user_id", user_id).execute()
+    if not goal_res.data:
+        raise HTTPException(status_code=404, detail="목표를 찾을 수 없습니다.")
+    goal = goal_res.data[0]
+
+    # 입금 내역 저장
+    deposit_data = {
+        "goal_id": goal_id,
+        "user_id": user_id,
+        "amount": deposit.amount,
+        "note": deposit.note or "",
+        "date": deposit.date or datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    authed_supabase.table("goal_deposits").insert(deposit_data).execute()
+
+    # 목표의 current_amount = 전체 입금 내역 합산으로 자동 갱신
+    all_deposits = authed_supabase.table("goal_deposits").select("amount").eq("goal_id", goal_id).execute()
+    total = sum(d["amount"] for d in all_deposits.data)
+
+    updated = authed_supabase.table("goals") \
+        .update({"current_amount": total}) \
+        .eq("id", goal_id) \
+        .execute().data[0]
+
+    # Neo4j에도 갱신된 목표 동기화
+    if graph_rag:
+        try:
+            graph_rag.sync_goal(updated)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (입금 추가): {e}")
+
+    return updated
+
+# ✅ 입금 내역 삭제 (DELETE /goals/{goal_id}/deposits/{deposit_id})
+# 삭제 후 current_amount 자동 재계산
+@router.delete("/{goal_id}/deposits/{deposit_id}")
+def delete_deposit(goal_id: str, deposit_id: str, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # 입금 내역 삭제
+    authed_supabase.table("goal_deposits") \
+        .delete() \
+        .eq("id", deposit_id) \
+        .eq("user_id", user_id) \
+        .execute()
+
+    # current_amount 재계산
+    all_deposits = authed_supabase.table("goal_deposits").select("amount").eq("goal_id", goal_id).execute()
+    total = sum(d["amount"] for d in all_deposits.data)
+
+    updated = authed_supabase.table("goals") \
+        .update({"current_amount": total}) \
+        .eq("id", goal_id) \
+        .execute().data[0]
+
+    # Neo4j에도 갱신된 목표 동기화
+    if graph_rag:
+        try:
+            graph_rag.sync_goal(updated)
+        except Exception as e:
+            print(f"⚠️ Neo4j 동기화 실패 (입금 삭제): {e}")
+
+    return updated

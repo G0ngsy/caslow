@@ -6,6 +6,7 @@ import { Colors } from '../constants/colors';
 import Header from '../components/Header';
 import GoalEditModal, { Goal, GOAL_TYPES } from './modals/GoalEditModal';
 import DeleteConfirmModal from './modals/DeleteConfirmModal';
+import GoalDepositModal from './modals/GoalDepositModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { getGoals, createGoal, deleteGoal, updateGoal, getGoalAdvice } from '../lib/api';
@@ -335,6 +336,8 @@ export default function GoalScreen() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   // 삭제 확인 모달
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  // 입금 내역 모달 (어떤 목표의 입금 내역을 볼지)
+  const [depositGoal, setDepositGoal] = useState<any>(null);
   // AI 조언 상태 (goal id → 조언 텍스트)
   const [aiAdvices, setAiAdvices] = useState<Record<string, string>>({});
   const [loadingAdvices, setLoadingAdvices] = useState<Record<string, boolean>>({});
@@ -488,6 +491,14 @@ const handleSaveEdit = async (updatedGoal: any) => {
                     <Text style={styles.goalTitle}>{goal.title}</Text>
                   </View>
                   <View style={styles.goalHeaderRight}>
+                    {/* 입금 내역 버튼 - 저축 금액 기록 및 조회 */}
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => setDepositGoal(goal)}
+                    >
+                      <Ionicons name="wallet-outline" size={16} color="#10B981" />
+                    </TouchableOpacity>
+
                     {/* 수정 버튼 */}
                     <TouchableOpacity
                       style={styles.editBtn}
@@ -660,6 +671,15 @@ const handleSaveEdit = async (updatedGoal: any) => {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {/* 입금 내역 모달 - 저축 금액 기록/조회/삭제 */}
+      <GoalDepositModal
+        visible={!!depositGoal}
+        goalId={depositGoal?.id || ''}
+        goalTitle={depositGoal?.title || ''}
+        onClose={() => setDepositGoal(null)}
+        onUpdated={fetchGoals}
+      />
 
       {/* 목표 수정 모달 */}
       <GoalEditModal
