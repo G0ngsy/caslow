@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity,Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import CoinLoader from '../components/CoinLoader';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
@@ -230,7 +231,7 @@ const handleExcel = async () => {
       {/* OCR 로딩 오버레이 */}
       {loading && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={Colors.white} />
+          <CoinLoader size="large" />
           <Text style={styles.loadingText}>영수증 분석 중... ✨</Text>
         </View>
       )}
