@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import { getExpensesByCategory, getExpensesByMonth, getCategories, getAiInsight } from '../lib/api';
-import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import CoinLoader from '../components/CoinLoader';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -124,7 +125,7 @@ export default function AnalysisScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <CoinLoader size="large" />
       </View>
     );
   }
@@ -294,7 +295,7 @@ export default function AnalysisScreen() {
             </View>
             {insightLoading ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <ActivityIndicator size="small" color={Colors.primary} />
+                <CoinLoader size="small" />
                 <Text style={styles.aiText}>AI가 분석 중이에요...</Text>
               </View>
             ) : (

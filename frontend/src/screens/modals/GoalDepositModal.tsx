@@ -2,7 +2,8 @@
 // 목표 카드의 💰 버튼을 누르면 열림
 // 입금 내역 리스트(날짜순) + 새 입금 추가 기능 제공
 
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
+import CoinLoader from '../../components/CoinLoader';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
@@ -129,7 +130,7 @@ export default function GoalDepositModal({
           {/* 입금 내역 리스트 (날짜 역순) */}
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
             {loading ? (
-              <ActivityIndicator size="small" color={Colors.primary} style={{ marginVertical: 16 }} />
+              <CoinLoader size="small" style={{ marginVertical: 16 }} />
             ) : deposits.length === 0 ? (
               <Text style={styles.emptyText}>아직 입금 내역이 없어요</Text>
             ) : (
@@ -214,7 +215,7 @@ export default function GoalDepositModal({
               disabled={adding}
             >
               {adding
-                ? <ActivityIndicator size="small" color={Colors.white} />
+                ? <CoinLoader size="small" />
                 : <Text style={styles.addBtnText}>추가</Text>
               }
             </TouchableOpacity>

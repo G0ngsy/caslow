@@ -93,7 +93,7 @@ export default function App() {
       setSession(session);
       setTimeout(() => {
         setLoading(false);
-      }, 2000);
+      }, 3000);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {

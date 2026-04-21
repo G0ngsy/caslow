@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Platform, Alert } from 'react-native';
+import CoinLoader from '../components/CoinLoader';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -451,7 +452,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <CoinLoader size="large" />
       </View>
     );
   }
@@ -553,7 +554,7 @@ const handleSaveEdit = async (updatedGoal: any) => {
                     </View>
                     {loadingAdvices[goal.id] ? (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <ActivityIndicator size="small" color={Colors.primary} />
+                        <CoinLoader size="small" />
                         <Text style={styles.aiAdviceText}>AI가 조언을 생성 중이에요...</Text>
                       </View>
                     ) : (
