@@ -70,20 +70,20 @@ def start_scheduler():
         id="recurring_expenses_job"
     )
 
-    # 매일 아침 8시 슬랙 알림
+    # 매일 오전 10시 슬랙 알림 (UTC 1시 = KST 10시)
     scheduler.add_job(
         send_daily_advice,
         trigger="cron",
-        hour=8,
+        hour=1,
         minute=0,
         id="daily_slack_advice_job"
     )
 
-    # 매일 아침 8시 이메일 알림
+    # 매일 오전 10시 이메일 알림 (UTC 1시 = KST 10시)
     scheduler.add_job(
         send_daily_email_advice,
         trigger="cron",
-        hour=8,
+        hour=1,
         minute=0,
         id="daily_email_advice_job"
     )
