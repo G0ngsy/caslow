@@ -350,3 +350,36 @@ export async function withdrawAccount() {
   if (!response.ok) throw new Error('회원탈퇴에 실패했습니다.');
   return response.json();
 }
+
+// ── 저축 입금 내역 ──────────────────────────────────────────
+
+// 특정 목표의 입금 내역 목록 조회 (날짜 역순)
+export async function getDeposits(goalId: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/goals/${goalId}/deposits`, { headers });
+  if (!response.ok) throw new Error('입금 내역을 불러오지 못했습니다.');
+  return response.json();
+}
+
+// 입금 추가 → 서버에서 current_amount 자동 재계산 후 갱신된 목표 반환
+export async function addDeposit(goalId: string, data: { amount: number; note?: string; date?: string }) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/goals/${goalId}/deposits`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('입금 추가에 실패했습니다.');
+  return response.json();
+}
+
+// 입금 내역 삭제 → 서버에서 current_amount 자동 재계산 후 갱신된 목표 반환
+export async function deleteDeposit(goalId: string, depositId: string) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/goals/${goalId}/deposits/${depositId}`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!response.ok) throw new Error('입금 삭제에 실패했습니다.');
+  return response.json();
+}

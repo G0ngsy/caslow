@@ -88,19 +88,7 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
               />
             </View>
 
-            {/* 현재 금액 */}
-            <View style={[styles.amountRow, { marginTop: 12 }]}>
-              <Text style={[styles.amountPrefix, { color: Colors.primary }]}>₩</Text>
-              <TextInput
-                style={styles.amountInput}
-                placeholder="현재 금액"
-                placeholderTextColor={Colors.textHint}
-                value={currentAmount}
-                onChangeText={setCurrentAmount}
-                keyboardType="numeric"
-              />
-            </View>
-            <Text style={styles.amountHint}>현재까지 모은 금액을 입력하세요</Text>
+            {/* 현재 금액은 입금 내역(💰 버튼)으로 자동 계산되므로 직접 입력 불필요 */}
 
             {/* 타입 선택 */}
             <View style={[styles.typeRow, { marginTop: 12 }]}>
