@@ -5,7 +5,6 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import date
 from database import supabase
-from routers.slack import send_daily_advice
 from routers.email_alert import send_daily_email_advice
 from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
 
@@ -70,15 +69,6 @@ def start_scheduler():
         id="recurring_expenses_job"
     )
 
-    # 매일 오전 10시 슬랙 알림 (UTC 1시 = KST 10시)
-    scheduler.add_job(
-        send_daily_advice,
-        trigger="cron",
-        hour=1,
-        minute=0,
-        id="daily_slack_advice_job"
-    )
-
     # 매일 오전 10시 이메일 알림 (UTC 1시 = KST 10시)
     scheduler.add_job(
         send_daily_email_advice,
@@ -89,4 +79,4 @@ def start_scheduler():
     )
 
     scheduler.start()
-    print("[스케줄러] 시작됨 - 매일 자정 정기 지출 + 매일 8시 슬랙/이메일 알림")
+    print("[스케줄러] 시작됨 - 매일 자정 정기 지출 + 매일 10시 이메일 알림")

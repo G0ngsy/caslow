@@ -38,10 +38,3 @@ def withdraw(authorization: str = Header(...)):
     supabase.auth.admin.delete_user(user_id)
 
     return {"success": True, "message": "회원탈퇴가 완료되었습니다."}
-
-
-# 임시 로그인 API (토큰 발급용 - 사용 후 삭제)
-@router.post("/temp-login")
-def temp_login(email: str, password: str):
-    res = supabase.auth.sign_in_with_password({"email": email, "password": password})
-    return {"access_token": res.session.access_token}
