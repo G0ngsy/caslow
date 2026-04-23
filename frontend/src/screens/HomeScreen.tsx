@@ -294,6 +294,24 @@ progressFill: {
   backgroundColor: Colors.accentLight,
   borderRadius: 3,
 },
+warningBanner: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#FF3B30',
+  marginHorizontal: 16,
+  marginBottom: 4,
+  marginTop: -8,
+  borderRadius: 12,
+  paddingHorizontal: 14,
+  paddingVertical: 10,
+  gap: 8,
+},
+warningBannerText: {
+  color: '#fff',
+  fontSize: 13,
+  fontWeight: '600',
+  flex: 1,
+},
 progressFooter: {
   flexDirection: 'row',
   justifyContent: 'space-between',
@@ -492,6 +510,16 @@ sortedExpenses.forEach(e => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* 예산 초과 경고 배너 */}
+        {budget > 0 && totalAmount > budget && (
+          <View style={styles.warningBanner}>
+            <Ionicons name="warning" size={18} color="#fff" />
+            <Text style={styles.warningBannerText}>
+              이번 달 예산을 {((totalAmount - budget)).toLocaleString()}원 초과했어요!
+            </Text>
+          </View>
+        )}
+
         {/* 이번 달 요약 카드 */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
@@ -504,23 +532,35 @@ sortedExpenses.forEach(e => {
           </View>
           <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
           <Text style={styles.summaryCount}>{thisMonthExpenses.length}건의 지출</Text>
-          <View style={styles.progressSection}>
-            <View style={styles.progressLabelRow}>
-              <Text style={styles.progressLabel}>예산 대비</Text>
-              <Text style={styles.progressPercent}>
-                {Math.round((totalAmount / budget) * 100)}%
-              </Text>
-            </View>
-            <View style={styles.progressBar}>
-              <View style={[styles.progressFill, {
-                width: `${Math.min((totalAmount / budget) * 100, 100)}%`
-              }]} />
-            </View>
-            <View style={styles.progressFooter}>
-              <Text style={styles.progressFooterText}>잔여: ₩{formatAmount(budget - totalAmount)}</Text>
-              <Text style={styles.progressFooterText}>예산: ₩{formatAmount(budget)}</Text>
-            </View>
-          </View>
+          {budget > 0 && (() => {
+            const ratio = totalAmount / budget;
+            const isOver = ratio > 1;
+            const fillColor = isOver ? '#FF3B30' : Colors.accentLight;
+            return (
+              <View style={styles.progressSection}>
+                <View style={styles.progressLabelRow}>
+                  <Text style={styles.progressLabel}>예산 대비</Text>
+                  <Text style={[styles.progressPercent, isOver && { color: '#FF3B30' }]}>
+                    {Math.round(ratio * 100)}%{isOver ? ' 초과' : ''}
+                  </Text>
+                </View>
+                <View style={styles.progressBar}>
+                  <View style={[styles.progressFill, {
+                    width: `${Math.min(ratio * 100, 100)}%`,
+                    backgroundColor: fillColor,
+                  }]} />
+                </View>
+                <View style={styles.progressFooter}>
+                  <Text style={[styles.progressFooterText, isOver && { color: '#FF3B30' }]}>
+                    {isOver
+                      ? `초과: ₩${formatAmount(totalAmount - budget)}`
+                      : `잔여: ₩${formatAmount(budget - totalAmount)}`}
+                  </Text>
+                  <Text style={styles.progressFooterText}>예산: ₩{formatAmount(budget)}</Text>
+                </View>
+              </View>
+            );
+          })()}
         </View>
 
         

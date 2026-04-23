@@ -7,6 +7,7 @@ from models.expense import ExpenseCreate, ExpenseUpdate
 from datetime import date, datetime, timezone
 from collections import defaultdict
 from graph_rag import graph_rag  # Neo4j 싱글톤 인스턴스
+import httpx
 
 # 라우터 생성 - /expenses 경로로 시작하는 API들을 모아요
 router = APIRouter(prefix="/expenses", tags=["expenses"])
@@ -74,6 +75,32 @@ def create_expense(expense: ExpenseCreate, authorization: str = Header(...)):
             graph_rag.sync_expense(saved)
         except Exception as e:
             print(f"⚠️ Neo4j 동기화 실패 (지출 생성): {e}")
+
+    # 예산 초과 시 푸시 알림 전송
+    try:
+        current_month = datetime.now().strftime("%Y-%m")
+        budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
+        if budget_row.data:
+            budget_amount = budget_row.data[0]["amount"]
+            month_expenses = authed_supabase.table("expenses") \
+                .select("amount") \
+                .eq("user_id", user_id) \
+                .like("date", f"{current_month}%") \
+                .execute()
+            total = sum(e["amount"] for e in month_expenses.data)
+            if total > budget_amount:
+                profile = authed_supabase.table("profiles").select("push_token").eq("user_id", user_id).execute()
+                if profile.data and profile.data[0].get("push_token"):
+                    push_token = profile.data[0]["push_token"]
+                    over = total - budget_amount
+                    httpx.post("https://exp.host/--/api/v2/push/send", json={
+                        "to": push_token,
+                        "title": "⚠️ 예산 초과!",
+                        "body": f"이번 달 예산을 {over:,}원 초과했어요.",
+                        "sound": "default",
+                    }, timeout=5)
+    except Exception as e:
+        print(f"⚠️ 예산 초과 알림 실패: {e}")
 
     return saved
 
