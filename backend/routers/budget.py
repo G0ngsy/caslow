@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel
 from database import supabase, get_supabase_with_token
+from graph_rag import graph_rag  # Neo4j 연동 추가
 
 router = APIRouter(prefix="/budget", tags=["budget"])
 
@@ -52,14 +53,21 @@ def save_budget(budget: BudgetUpdate, authorization: str = Header(...)):
 
     if existing.data:
         # 있으면 수정
-        response = authed_supabase.table("budgets") \
+        authed_supabase.table("budgets") \
             .update({"amount": budget.amount}) \
             .eq("user_id", user_id) \
             .execute()
     else:
         # 없으면 생성
-        response = authed_supabase.table("budgets") \
+        authed_supabase.table("budgets") \
             .insert({"user_id": user_id, "amount": budget.amount}) \
             .execute()
+
+    # Neo4j에 예산 노드 동기화
+    try:
+        if graph_rag:
+            graph_rag.sync_budget(user_id, budget.amount)
+    except Exception as e:
+        print(f"⚠️ Neo4j 동기화 실패 (예산): {e}")
 
     return {"amount": budget.amount}

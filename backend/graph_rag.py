@@ -219,6 +219,18 @@ class CaslowGraphRAG:
                     f"[정기지출] {r['title']} ({r['category']}): "
                     f"매월 {r['day']}일 {r['amount']:,}원"
                 )
+                
+        # ── 예산 관련 질문 ──
+        if any(kw in q for kw in ['예산', '한도', '얼마까지', '초과', '남은']):
+            rows = self._run("""
+                MATCH (b:Budget)
+                WHERE b.user_id = $user_id
+                RETURN b.amount AS amount
+            """, {"user_id": user_id})
+            for r in rows:
+                context_parts.append(
+                    f"[월 예산] {r['amount']:,}원"
+                )
 
         # ── 컨텍스트 없으면 전체 요약 반환 ──
         if not context_parts:
@@ -374,6 +386,20 @@ class CaslowGraphRAG:
             MATCH (r:Recurring {id: $id})
             DETACH DELETE r
         """, {"id": str(recurring_id)})
+
+    def sync_budget(self, user_id: str, amount: int):
+        """
+        월 예산 노드 추가/업데이트
+        예산 저장/수정 시 호출
+        """
+        self._run("""
+            MERGE (b:Budget {user_id: $user_id})
+            SET b.amount   = $amount,
+                b.user_id  = $user_id
+        """, {
+            "user_id": user_id,
+            "amount":  amount,
+        })
 
 
 # 앱 전체에서 공유하는 싱글톤 인스턴스
