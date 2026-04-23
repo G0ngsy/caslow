@@ -59,15 +59,15 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableOpacity style={styles.overlay} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} style={styles.card}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {/* 헤더 */}
-            <View style={styles.header}>
-              <Text style={styles.title}>목표 수정</Text>
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <Ionicons name="close" size={18} color={Colors.textDark} />
-              </TouchableOpacity>
-            </View>
+          {/* 헤더 - 고정 */}
+          <View style={styles.header}>
+            <Text style={styles.title}>목표 수정</Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+              <Ionicons name="close" size={18} color={Colors.textDark} />
+            </TouchableOpacity>
+          </View>
 
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* 목표 이름 */}
             <TextInput
               style={styles.input}
@@ -152,11 +152,12 @@ export default function GoalEditModal({ visible, goal, onSave, onClose }: GoalEd
               )}
             </View>
 
-            {/* 저장 버튼 */}
-            <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-              <Text style={styles.saveBtnText}>저장</Text>
-            </TouchableOpacity>
           </ScrollView>
+
+          {/* 저장 버튼 - 고정 */}
+          <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+            <Text style={styles.saveBtnText}>저장</Text>
+          </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
       </KeyboardAvoidingView>
