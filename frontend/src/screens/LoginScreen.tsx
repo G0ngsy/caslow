@@ -52,6 +52,15 @@ const styles = StyleSheet.create({
     color: Colors.textSub,
     fontSize: 14,
   },
+  forgotButton: {
+    alignItems: 'flex-end',
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  forgotText: {
+    color: Colors.accentLight,
+    fontSize: 13,
+  },
 });
 
 export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: () => void }) {
@@ -71,6 +80,20 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
     if (!val) return '';
     if (val.length < 6) return '비밀번호는 6자 이상이어야 합니다';
     return '';
+  };
+
+  const handleForgotPassword = async () => {
+    const trimmed = email.trim();
+    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
+      Alert.alert('안내', '이메일을 먼저 입력해주세요.');
+      return;
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmed);
+    if (error) {
+      Alert.alert('오류', '메일 전송에 실패했어요. 다시 시도해주세요.');
+    } else {
+      Alert.alert('메일 전송 완료', `${trimmed}로 비밀번호 재설정 링크를 보냈어요.\n메일함을 확인해주세요.`);
+    }
   };
 
   const handleLogin = async () => {
@@ -122,6 +145,9 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
             onSubmitEditing={handleLogin}
             error={passwordError}
           />
+          <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
+            <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
+          </TouchableOpacity>
           <Button title={loading ? '로그인 중...' : '로그인'} onPress={handleLogin} />
 
           <TouchableOpacity style={styles.linkButton} onPress={onNavigateSignup}>
