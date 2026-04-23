@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Colors } from '../../constants/colors';
 import { getCategoryEmoji } from '../../constants/categories';
@@ -54,6 +54,7 @@ export default function CategoryEditModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} style={styles.box}>
           {/* 헤더 */}
@@ -109,6 +110,7 @@ export default function CategoryEditModal({
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
