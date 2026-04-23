@@ -39,6 +39,14 @@ def get_user_id(authorization: str) -> str:
 def chat(request: ChatRequest, authorization: str = Header(...)):
     """유저 메시지를 GraphRAG로 탐색 후 Groq API로 전송"""
     user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    # Supabase에서 예산 직접 조회
+    budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
+    print(f"🔍 예산 조회 결과 - user_id: {user_id}, data: {budget_row.data}")
+    budget_amount = budget_row.data[0]["amount"] if budget_row.data else 500000
+    print(f"💰 최종 예산: {budget_amount}")
 
     # 유저 마지막 질문으로 Neo4j에서 관련 노드 탐색 (유저 데이터만)
     last_message = request.messages[-1].content if request.messages else ""
@@ -50,6 +58,8 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
 사용자의 지출 데이터를 바탕으로 친절하고 실용적인 재무 조언을 제공합니다.
 구체적인 수치와 함께 조언해주세요.
 답변은 간결하고 친근한 말투로 해주세요.
+
+사용자의 월 예산: {budget_amount:,}원
 
 아래는 사용자의 재무 데이터 분석 결과입니다:
 {graph_context}
