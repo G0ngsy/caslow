@@ -71,10 +71,10 @@ export default function CategoryEditModal({
             ) : (
               categories.map(cat => (
                 <View key={cat.id} style={styles.listItem}>
-                  <View style={[styles.chip, { backgroundColor: cat.color + '33' }]}>
+                  <TouchableOpacity activeOpacity={1} style={[styles.chip, { backgroundColor: cat.color + '33' }]}>
                     <Text style={styles.chipIcon}>{getCategoryEmoji(cat.name)}</Text>
                     <Text style={[styles.chipText, { color: cat.color }]}>{cat.name}</Text>
-                  </View>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => onDelete(cat.id)}
                     style={styles.deleteBtn}

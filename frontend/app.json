@@ -17,6 +17,7 @@
     },
     "android": {
       "package": "com.gongsy.caslow",
+      "ndkVersion": "27.3.13750724",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"

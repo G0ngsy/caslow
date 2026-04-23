@@ -2,7 +2,7 @@
 // 목표 카드의 💰 버튼을 누르면 열림
 // 입금 내역 리스트(날짜순) + 새 입금 추가 기능 제공
 
-import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ScrollView, Alert, Platform, KeyboardAvoidingView } from 'react-native';
 import CoinLoader from '../../components/CoinLoader';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -107,108 +107,111 @@ export default function GoalDepositModal({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} style={styles.box}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity activeOpacity={1} style={styles.box}>
 
-          {/* 헤더 */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>저축 내역</Text>
-              <Text style={styles.subtitle}>{goalTitle}</Text>
+            {/* 헤더 - 고정 */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.title}>저축 내역</Text>
+                <Text style={styles.subtitle}>{goalTitle}</Text>
+              </View>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={22} color={Colors.textDark} />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={22} color={Colors.textDark} />
-            </TouchableOpacity>
-          </View>
 
-          {/* 총 입금 합계 */}
-          <View style={styles.totalBox}>
-            <Text style={styles.totalLabel}>총 저축 금액</Text>
-            <Text style={styles.totalAmount}>₩{formatAmount(total)}</Text>
-          </View>
+            {/* 스크롤 영역 */}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {/* 총 입금 합계 */}
+              <View style={styles.totalBox}>
+                <Text style={styles.totalLabel}>총 저축 금액</Text>
+                <Text style={styles.totalAmount}>₩{formatAmount(total)}</Text>
+              </View>
 
-          {/* 입금 내역 리스트 (날짜 역순) */}
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {loading ? (
-              <CoinLoader size="small" style={{ marginVertical: 16 }} />
-            ) : deposits.length === 0 ? (
-              <Text style={styles.emptyText}>아직 입금 내역이 없어요</Text>
-            ) : (
-              deposits.map(deposit => (
-                <View key={deposit.id} style={styles.depositRow}>
-                  <View style={styles.depositLeft}>
-                    {/* 날짜 */}
-                    <Text style={styles.depositDate}>{deposit.date}</Text>
-                    {/* 메모 (있을 때만) */}
-                    {deposit.note ? (
-                      <Text style={styles.depositNote}>{deposit.note}</Text>
-                    ) : null}
+              {/* 입금 내역 리스트 (날짜 역순) */}
+              {loading ? (
+                <CoinLoader size="small" style={{ marginVertical: 16 }} />
+              ) : deposits.length === 0 ? (
+                <Text style={styles.emptyText}>아직 입금 내역이 없어요</Text>
+              ) : (
+                deposits.map(deposit => (
+                  <View key={deposit.id} style={styles.depositRow}>
+                    <View style={styles.depositLeft}>
+                      {/* 날짜 */}
+                      <Text style={styles.depositDate}>{deposit.date}</Text>
+                      {/* 메모 (있을 때만) */}
+                      {deposit.note ? (
+                        <Text style={styles.depositNote}>{deposit.note}</Text>
+                      ) : null}
+                    </View>
+                    <View style={styles.depositRight}>
+                      <Text style={styles.depositAmount}>+₩{formatAmount(deposit.amount)}</Text>
+                      {/* 삭제 버튼 */}
+                      <TouchableOpacity onPress={() => handleDelete(deposit.id)}>
+                        <Ionicons name="trash-outline" size={16} color={Colors.danger} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.depositRight}>
-                    <Text style={styles.depositAmount}>+₩{formatAmount(deposit.amount)}</Text>
-                    {/* 삭제 버튼 */}
-                    <TouchableOpacity onPress={() => handleDelete(deposit.id)}>
-                      <Ionicons name="trash-outline" size={16} color={Colors.danger} />
-                    </TouchableOpacity>
-                  </View>
+                ))
+              )}
+
+              {/* 새 입금 추가 영역 */}
+              <View style={styles.addSection}>
+                <Text style={styles.addTitle}>입금 추가</Text>
+
+                {/* 금액 입력 */}
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountPrefix}>₩</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="금액"
+                    placeholderTextColor={Colors.textHint}
+                    value={newAmount}
+                    onChangeText={setNewAmount}
+                    keyboardType="numeric"
+                  />
                 </View>
-              ))
-            )}
-          </ScrollView>
 
-          {/* 새 입금 추가 영역 */}
-          <View style={styles.addSection}>
-            <Text style={styles.addTitle}>입금 추가</Text>
+                {/* 메모 입력 */}
+                <TextInput
+                  style={styles.noteInput}
+                  placeholder="메모 (선택)"
+                  placeholderTextColor={Colors.textHint}
+                  value={newNote}
+                  onChangeText={setNewNote}
+                />
 
-            {/* 금액 입력 */}
-            <View style={styles.amountRow}>
-              <Text style={styles.amountPrefix}>₩</Text>
-              <TextInput
-                style={styles.amountInput}
-                placeholder="금액"
-                placeholderTextColor={Colors.textHint}
-                value={newAmount}
-                onChangeText={setNewAmount}
-                keyboardType="numeric"
-              />
-            </View>
+                {/* 날짜 입력 */}
+                {Platform.OS === 'web' ? (
+                  // 웹: input type=date
+                  // @ts-ignore
+                  <input
+                    type="date"
+                    value={newDate}
+                    onChange={(e: any) => setNewDate(e.target.value)}
+                    style={{
+                      width: '100%', padding: '10px', borderRadius: '10px',
+                      border: `1px solid ${Colors.border}`, fontSize: '14px',
+                      color: Colors.textDark, backgroundColor: Colors.bgMain,
+                      outline: 'none', boxSizing: 'border-box', marginBottom: '8px',
+                    }}
+                  />
+                ) : (
+                  // 앱: 텍스트 직접 입력 (YYYY-MM-DD)
+                  <TextInput
+                    style={styles.noteInput}
+                    placeholder="날짜 (YYYY-MM-DD)"
+                    placeholderTextColor={Colors.textHint}
+                    value={newDate}
+                    onChangeText={setNewDate}
+                  />
+                )}
+              </View>
+            </ScrollView>
 
-            {/* 메모 입력 */}
-            <TextInput
-              style={styles.noteInput}
-              placeholder="메모 (선택)"
-              placeholderTextColor={Colors.textHint}
-              value={newNote}
-              onChangeText={setNewNote}
-            />
-
-            {/* 날짜 입력 */}
-            {Platform.OS === 'web' ? (
-              // 웹: input type=date
-              // @ts-ignore
-              <input
-                type="date"
-                value={newDate}
-                onChange={(e: any) => setNewDate(e.target.value)}
-                style={{
-                  width: '100%', padding: '10px', borderRadius: '10px',
-                  border: `1px solid ${Colors.border}`, fontSize: '14px',
-                  color: Colors.textDark, backgroundColor: Colors.bgMain,
-                  outline: 'none', boxSizing: 'border-box', marginBottom: '8px',
-                }}
-              />
-            ) : (
-              // 앱: 텍스트 직접 입력 (YYYY-MM-DD)
-              <TextInput
-                style={styles.noteInput}
-                placeholder="날짜 (YYYY-MM-DD)"
-                placeholderTextColor={Colors.textHint}
-                value={newDate}
-                onChangeText={setNewDate}
-              />
-            )}
-
-            {/* 추가 버튼 */}
+            {/* 추가 버튼 - 고정 */}
             <TouchableOpacity
               style={[styles.addBtn, adding && { opacity: 0.6 }]}
               onPress={handleAdd}
@@ -219,10 +222,10 @@ export default function GoalDepositModal({
                 : <Text style={styles.addBtnText}>추가</Text>
               }
             </TouchableOpacity>
-          </View>
 
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
