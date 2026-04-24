@@ -112,9 +112,7 @@ export default function SignupScreen({ onNavigateLogin }: { onNavigateLogin?: ()
         Alert.alert('회원가입 실패', '회원가입에 실패했어요. 다시 시도해주세요.');
       }
     } else {
-      Alert.alert('완료', '이메일을 확인해주세요!', [
-        { text: '확인', onPress: onNavigateLogin }
-      ]);
+      onNavigateLogin?.();
     }
   };
 

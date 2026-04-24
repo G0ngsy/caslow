@@ -2,7 +2,7 @@
 # 회원탈퇴 시 모든 데이터 삭제
 
 from fastapi import APIRouter, Header, HTTPException
-from database import supabase, get_supabase_with_token
+from database import supabase, supabase_admin, get_supabase_with_token
 from dotenv import load_dotenv
 import os
 
@@ -34,7 +34,7 @@ def withdraw(authorization: str = Header(...)):
     authed_supabase.table("budgets").delete().eq("user_id", user_id).execute()
     authed_supabase.table("profiles").delete().eq("user_id", user_id).execute()
 
-    # Supabase Auth에서 유저 삭제 (서비스 키 필요)
-    supabase.auth.admin.delete_user(user_id)
+    # Supabase Auth에서 유저 삭제 (서비스 키로 admin 권한 필요)
+    supabase_admin.auth.admin.delete_user(user_id)
 
     return {"success": True, "message": "회원탈퇴가 완료되었습니다."}
