@@ -99,7 +99,6 @@ export default function AnalysisScreen() {
     setInsightLoading(false);
   }
 };
-
      
 
   // 총 지출 계산
