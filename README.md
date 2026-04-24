@@ -64,7 +64,7 @@
 
 ## 🏗 아키텍처
 
-![아키텍처](frontend/assets/가계부아키텍처3.png)
+![아키텍처](frontend/assets/가계부%20아키텍처%20최종.png)
 
 ---
 
