@@ -78,7 +78,7 @@ export default function App() {
       if (status !== 'granted') return;
 
       const token = await Notifications.getExpoPushTokenAsync({
-        projectId: 'your-project-id', // app.json의 projectId
+        projectId: '111d2582-659d-44d8-a63d-61a214259406',
       });
 
       await savePushToken(token.data);
