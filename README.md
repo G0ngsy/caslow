@@ -64,17 +64,7 @@
 
 ## 🏗 아키텍처
 
-```
-[React Native 앱]
-       │
-       ▼
-[FastAPI 백엔드 — Render]
-   ├── Supabase (PostgreSQL) — 지출/목표/예산 데이터
-   ├── Neo4j Aura — GraphRAG 지식 그래프
-   ├── Groq API — LLM 채팅 / Vision OCR
-   ├── SendGrid — 이메일 알림
-   └── Expo Push API — 푸시 알림
-```
+![아키텍처](frontend/assets/가계부아키텍처3.png)
 
 ---
 
@@ -158,11 +148,4 @@ npx expo start
 
 ---
 
-## 📌 포트폴리오 어필 포인트
 
-- Neo4j 기반 GraphRAG 지식 그래프 설계 및 구현
-- LLM + Vision AI 멀티모달 파이프라인 구축
-- Supabase Auth + OTP 비밀번호 재설정 보안 구현
-- 예산 초과 시 Expo 푸시 알림 실시간 전송
-- SendGrid SMTP 이메일 자동화
-- 완전 무료 클라우드 스택 풀스택 배포
