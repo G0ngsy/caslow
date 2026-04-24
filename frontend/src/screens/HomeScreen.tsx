@@ -300,7 +300,7 @@ warningBanner: {
   backgroundColor: '#FF3B30',
   marginHorizontal: 16,
   marginBottom: 4,
-  marginTop: -8,
+  marginTop: 5,
   borderRadius: 12,
   paddingHorizontal: 14,
   paddingVertical: 10,
@@ -503,24 +503,23 @@ sortedExpenses.forEach(e => {
       {/* 헤더 */}
       <Header showLogo showIcons />
 
+      {/* 예산 초과 경고 배너 */}
+      {budget > 0 && totalAmount > budget && (
+        <View style={styles.warningBanner}>
+          <Ionicons name="warning" size={18} color="#fff" />
+          <Text style={styles.warningBannerText}>
+            이번 달 예산을 {(totalAmount - budget).toLocaleString()}원 초과했어요!
+          </Text>
+        </View>
+      )}
+
       {/* 인사말 + 명언 */}
       <View style={styles.greetingBox}>
         <Text style={styles.greeting}>{getGreeting()}</Text>
         <Text style={styles.quote}>"{getRandomQuote()}"</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 예산 초과 경고 배너 */}
-        {budget > 0 && totalAmount > budget && (
-          <View style={styles.warningBanner}>
-            <Ionicons name="warning" size={18} color="#fff" />
-            <Text style={styles.warningBannerText}>
-              이번 달 예산을 {((totalAmount - budget)).toLocaleString()}원 초과했어요!
-            </Text>
-          </View>
-        )}
-
-        {/* 이번 달 요약 카드 */}
+      {/* 이번 달 요약 카드 */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <View style={styles.summaryHeaderLeft}>
@@ -563,7 +562,7 @@ sortedExpenses.forEach(e => {
           })()}
         </View>
 
-        
+                   
           {/* 카테고리 필터 */}
           <View style={styles.filterContainer}>
             {categories.map(cat => (
@@ -642,6 +641,8 @@ sortedExpenses.forEach(e => {
             )}
           </View>
         </View>
+        
+        <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* 지출 목록 */}
         {Object.entries(grouped).map(([label, items]) => (

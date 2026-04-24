@@ -7,6 +7,7 @@ import SplashScreen from './src/screens/SplashScreen';
 import { supabase } from './src/lib/supabase';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import ForgotPasswordModal from './src/screens/modals/ForgotPasswordModal';
 import HomeScreen from './src/screens/HomeScreen';
 import ExpenseScreen from './src/screens/ExpenseScreen';
 import ExpenseFormScreen from './src/screens/ExpenseFormScreen';
@@ -68,6 +69,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSignup, setShowSignup] = useState(false);
+  const [forgotVisible, setForgotVisible] = useState(false);
 
   // 푸시 알림 권한 요청 및 토큰 저장
   const registerPushToken = async () => {
@@ -105,10 +107,22 @@ export default function App() {
     return <SplashScreen />;
   }
 
-  if (!session) {
-    return showSignup
-      ? <SignupScreen onNavigateLogin={() => setShowSignup(false)} />
-      : <LoginScreen onNavigateSignup={() => setShowSignup(true)} />;
+  if (!session || forgotVisible) {
+    return (
+      <>
+        {showSignup
+          ? <SignupScreen onNavigateLogin={() => setShowSignup(false)} />
+          : <LoginScreen onNavigateSignup={() => setShowSignup(true)} onForgotPassword={() => setForgotVisible(true)} />
+        }
+        <ForgotPasswordModal
+          visible={forgotVisible}
+          onClose={async () => {
+            await supabase.auth.signOut();
+            setForgotVisible(false);
+          }}
+        />
+      </>
+    );
   }
 
   return (

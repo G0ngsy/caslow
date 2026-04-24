@@ -30,6 +30,7 @@
             "favicon": "./assets/favicon.png",
             "bundler": "metro"
           },
+    "scheme": "caslow",
     "plugins": [
       "@react-native-community/datetimepicker",
       "expo-font"
