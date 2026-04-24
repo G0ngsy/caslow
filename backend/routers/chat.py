@@ -7,6 +7,7 @@ from typing import List
 from groq import Groq
 from database import supabase, get_supabase_with_token
 from datetime import datetime
+import calendar
 import os
 from dotenv import load_dotenv
 from graph_rag import graph_rag
@@ -93,7 +94,8 @@ def get_insight(authorization: str = Header(...)):
     # Supabase에서 예산 및 이번 달 총 지출 조회
     now = datetime.now()
     month_start = now.strftime("%Y-%m-01")
-    month_end = now.strftime("%Y-%m-31")
+    last_day = calendar.monthrange(now.year, now.month)[1]
+    month_end = now.strftime(f"%Y-%m-{last_day:02d}")
     budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0
     month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).gte("date", month_start).lte("date", month_end).execute()
