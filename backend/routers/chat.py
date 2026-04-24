@@ -5,7 +5,8 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 from typing import List
 from groq import Groq
-from database import supabase, get_supabase_with_token  # get_supabase_with_token: goal-advice에서 사용
+from database import supabase, get_supabase_with_token
+from datetime import datetime
 import os
 from dotenv import load_dotenv
 from graph_rag import graph_rag
@@ -90,7 +91,6 @@ def get_insight(authorization: str = Header(...)):
         return {"insight": "AI 분석을 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해주세요."}
 
     # Supabase에서 예산 및 이번 달 총 지출 조회
-    from datetime import datetime
     current_month = datetime.now().strftime("%Y-%m")
     budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0

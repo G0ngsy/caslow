@@ -88,11 +88,12 @@ export default function AnalysisScreen() {
   }
 
   // AI 인사이트는 별도로 불러오기 (시간이 걸려서 따로 처리)
+  setInsightLoading(true);
   try {
     const insight = await getAiInsight();
     setAiInsight(insight.insight);
-  } catch (error) {
-    console.error('AI 인사이트 불러오기 실패:', error);
+  } catch (error: any) {
+    console.error('AI 인사이트 불러오기 실패:', error?.message || error);
     setAiInsight('AI 인사이트를 불러오지 못했습니다.');
   } finally {
     setInsightLoading(false);
