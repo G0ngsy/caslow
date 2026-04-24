@@ -83,9 +83,27 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
 def get_insight(authorization: str = Header(...)):
     """GraphRAG 기반 AI 인사이트 생성"""
     user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
 
     if not graph_rag:
         return {"insight": "AI 분석을 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해주세요."}
+
+    # Supabase에서 예산 및 이번 달 총 지출 조회
+    from datetime import datetime
+    current_month = datetime.now().strftime("%Y-%m")
+    budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
+    budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0
+    month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).like("date", f"{current_month}%").execute()
+    total_spent = sum(e["amount"] for e in month_expenses.data) if month_expenses.data else 0
+
+    budget_info = ""
+    if budget_amount > 0:
+        over = total_spent - budget_amount
+        if over > 0:
+            budget_info = f"\n⚠️ 예산 초과: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 ({over:,}원 초과)"
+        else:
+            budget_info = f"\n✅ 예산 현황: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 (잔여 {budget_amount - total_spent:,}원)"
 
     # Neo4j에서 지출 패턴 탐색 (유저 데이터만)
     graph_context = graph_rag.search("지출 패턴 분석 절약", user_id)
@@ -101,11 +119,11 @@ def get_insight(authorization: str = Header(...)):
                 "role": "system",
                 "content": """당신은 재무 분석 AI입니다. [언어 규칙] 반드시 한국어로만 답변하세요. 영어, 일본어, 태국어, 중국어 등 어떤 외국어도 절대 사용하지 마세요.
 사용자의 지출 데이터를 분석해서 2~3줄의 간결한 인사이트를 제공해주세요.
-구체적인 금액과 카테고리를 언급하고, 절약 팁을 한 가지 제안해주세요."""
+예산 초과 여부가 있으면 반드시 언급하고, 구체적인 금액과 카테고리를 언급하고, 절약 팁을 한 가지 제안해주세요."""
             },
             {
                 "role": "user",
-                "content": f"다음 지출 데이터를 분석해주세요:\n{graph_context}"
+                "content": f"다음 지출 데이터를 분석해주세요:{budget_info}\n{graph_context}"
             }
         ],
         max_tokens=300,

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useState } from 'react';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -9,10 +9,7 @@ import { registerPushToken } from '../lib/pushNotification';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.bg,
-  },
+  container: { flex: 1, backgroundColor: Colors.bg },
   content: {
     flexGrow: 1,
     justifyContent: 'center',
@@ -44,26 +41,19 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 10,
   },
-  linkButton: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  linkText: {
-    color: Colors.textSub,
-    fontSize: 14,
-  },
-  forgotButton: {
-    alignItems: 'flex-end',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  forgotText: {
-    color: Colors.accentLight,
-    fontSize: 13,
-  },
+  linkButton: { alignItems: 'center', marginTop: 20 },
+  linkText: { color: Colors.textSub, fontSize: 14 },
+  forgotButton: { alignItems: 'flex-end', marginTop: 4, marginBottom: 12 },
+  forgotText: { color: Colors.accentLight, fontSize: 13 },
 });
 
-export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: () => void }) {
+export default function LoginScreen({
+  onNavigateSignup,
+  onForgotPassword,
+}: {
+  onNavigateSignup?: () => void;
+  onForgotPassword?: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,20 +72,6 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
     return '';
   };
 
-  const handleForgotPassword = async () => {
-    const trimmed = email.trim();
-    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
-      Alert.alert('안내', '이메일을 먼저 입력해주세요.');
-      return;
-    }
-    const { error } = await supabase.auth.resetPasswordForEmail(trimmed);
-    if (error) {
-      Alert.alert('오류', '메일 전송에 실패했어요. 다시 시도해주세요.');
-    } else {
-      Alert.alert('메일 전송 완료', `${trimmed}로 비밀번호 재설정 링크를 보냈어요.\n메일함을 확인해주세요.`);
-    }
-  };
-
   const handleLogin = async () => {
     const eErr = validateEmail(email) || (!email ? '이메일을 입력해주세요' : '');
     const pErr = validatePassword(password) || (!password ? '비밀번호를 입력해주세요' : '');
@@ -109,13 +85,13 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
 
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
-        Alert.alert('로그인 실패', '이메일 또는 비밀번호가 올바르지 않아요.');
+        setEmailError('이메일 또는 비밀번호가 올바르지 않아요');
       } else if (error.message.includes('Email not confirmed')) {
-        Alert.alert('로그인 실패', '이메일 인증이 필요해요. 메일함을 확인해주세요.');
+        setEmailError('이메일 인증이 필요해요. 메일함을 확인해주세요');
       } else if (error.message.includes('too many requests')) {
-        Alert.alert('로그인 실패', '너무 많은 시도가 있었어요. 잠시 후 다시 시도해주세요.');
+        setPasswordError('너무 많은 시도가 있었어요. 잠시 후 다시 시도해주세요');
       } else {
-        Alert.alert('로그인 실패', '로그인에 실패했어요. 다시 시도해주세요.');
+        setPasswordError('로그인에 실패했어요. 다시 시도해주세요');
       }
     } else {
       await registerPushToken();
@@ -145,7 +121,7 @@ export default function LoginScreen({ onNavigateSignup }: { onNavigateSignup?: (
             onSubmitEditing={handleLogin}
             error={passwordError}
           />
-          <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
+          <TouchableOpacity style={styles.forgotButton} onPress={onForgotPassword}>
             <Text style={styles.forgotText}>비밀번호를 잊으셨나요?</Text>
           </TouchableOpacity>
           <Button title={loading ? '로그인 중...' : '로그인'} onPress={handleLogin} />
