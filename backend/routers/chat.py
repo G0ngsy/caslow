@@ -91,10 +91,12 @@ def get_insight(authorization: str = Header(...)):
         return {"insight": "AI 분석을 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해주세요."}
 
     # Supabase에서 예산 및 이번 달 총 지출 조회
-    current_month = datetime.now().strftime("%Y-%m")
+    now = datetime.now()
+    month_start = now.strftime("%Y-%m-01")
+    month_end = now.strftime("%Y-%m-31")
     budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0
-    month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).like("date", f"{current_month}%").execute()
+    month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).gte("date", month_start).lte("date", month_end).execute()
     total_spent = sum(e["amount"] for e in month_expenses.data) if month_expenses.data else 0
 
     budget_info = ""
