@@ -513,6 +513,7 @@ sortedExpenses.forEach(e => {
     <View style={styles.container}>
       {/* 헤더 */}
       <Header showLogo showIcons />
+      <ScrollView showsVerticalScrollIndicator={false}>
 
       {/* 예산 초과 경고 배너 */}
       {budget > 0 && totalAmount > budget && (
@@ -530,6 +531,7 @@ sortedExpenses.forEach(e => {
         <Text style={styles.quote}>"{getRandomQuote()}"</Text>
       </View>
 
+      
       {/* 이번 달 요약 카드 */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
@@ -653,7 +655,7 @@ sortedExpenses.forEach(e => {
           </View>
         </View>
         
-        <ScrollView showsVerticalScrollIndicator={false}>
+        
 
         {/* 지출 목록 */}
         {Object.entries(grouped).map(([label, items]) => (
