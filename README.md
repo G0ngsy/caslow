@@ -8,61 +8,88 @@
 
 ---
 
-## ✨ 주요 기능
+## ✨ 주요 기능 (Core Features)
 
-### 💬 AI 채팅
+### AI 채팅
 - Neo4j GraphRAG 기반으로 사용자 지출 데이터를 탐색
 - Groq LLaMA 3.3 70B 모델로 개인화된 재무 조언 제공
 - "이번 달 가장 많이 쓴 카테고리가 뭐야?" 같은 자연어 질의 가능
 
-### 🧾 지출 입력
+### 지출 입력
 - 직접 입력, 영수증 촬영(Groq Vision OCR), 엑셀/CSV 가져오기
 - AI가 지출 항목명을 보고 카테고리 자동 분류
 - 정기 지출(월세, 구독료 등) 자동 등록 (APScheduler)
 
-### 📊 분석
+### 분석
 - 카테고리별 도넛 차트 (전체 / 변동 / 정기 탭)
 - 월별 지출 추이 라인 차트
 - AI 인사이트 카드 (예산 초과 여부 포함)
 
-### 🎯 목표 관리
+### 목표 관리
 - 재무 목표 금액 및 기간 설정
 - 달성률 시각화 + GraphRAG 기반 AI 조언
 
-### ⚠️ 예산 관리
+### 예산 관리
 - 월 예산 설정
 - 초과 시 홈 화면 경고 배너 + 푸시 알림 전송
 
-### 📧 이메일 알림
-- 매일 아침 8시 AI 소비 조언 이메일 자동 발송 (SendGrid)
+### 이메일 알림
+- 매일 아침 10시 AI 소비 조언 이메일 자동 발송 (SendGrid)
 
-### 🔐 인증
+### 인증
 - 이메일 회원가입 / 로그인 (Supabase Auth)
 - 비밀번호 재설정: 이메일 OTP 인증 모달
 - 회원탈퇴: 모든 데이터 삭제 후 계정 제거
 
 ---
 
-## 🛠 기술 스택
+## 🛠 기술 스택 (Tech Stack)
 
-| 구분 | 기술 |
-|------|------|
-| 앱 (프론트) | React Native + TypeScript (Expo) |
-| 백엔드 | FastAPI (Python) |
-| LLM | Groq API — LLaMA 3.3 70B |
-| Vision AI (OCR) | Groq Vision — llama-4-scout |
-| GraphRAG | Neo4j Aura |
-| DB | Supabase (PostgreSQL) |
-| 이메일 | SendGrid SMTP |
-| 푸시 알림 | Expo Push API |
-| 스케줄러 | APScheduler |
-| 배포 (백엔드) | Render |
-| 배포 (웹) | Vercel |
-| 배포 (앱) | Android Studio 로컬 빌드 (APK) |
+**Frontend**
+
+React Native, TypeScript, Expo, React Navigation, expo-notifications, expo-image-picker, react-native-gifted-charts
+
+**Backend & AI**
+
+Python, FastAPI, Groq API (LLaMA 3.3 70B / llama-4-scout), Neo4j Aura, APScheduler, pandas
+
+**Infrastructure**
+
+Supabase (PostgreSQL + Auth), SendGrid SMTP, Expo Push API, Render, Vercel, Android Studio
+
+**세부 기술 리스트**
+
+| 구분 | 기술 / 라이브러리 |
+|------|----------------|
+| Frontend | React Native, TypeScript, Expo, React Navigation |
+| UI | react-native-gifted-charts, expo-image-picker |
+| 푸시 알림 | expo-notifications, Expo Push API |
+| Backend | Python, FastAPI, Uvicorn |
+| LLM / AI | Groq API — LLaMA 3.3 70B, llama-4-scout (Vision OCR) |
+| GraphRAG | Neo4j Aura, neo4j (Python driver) |
+| DB / Auth | Supabase (PostgreSQL), supabase-py |
+| 이메일 | SendGrid SMTP, sendgrid (Python) |
+| 스케줄러 | APScheduler, pandas (CSV 파싱) |
+| 배포 | Render (백엔드), Vercel (웹), Android Studio APK |
 
 ---
 
-## 🏗 아키텍처
+## ⚙️ 핵심 데이터 처리 로직 (Data Processing Pipeline)
+
+지출 데이터를 수집하고 GraphRAG 기반 AI 응답을 생성하기까지의 처리 흐름입니다.
+
+| 단계 | 도구 | 역할 및 결과물 |
+|------|------|--------------|
+| 지출 입력 | 직접입력 / Groq Vision / pandas | 지출 데이터 수집 및 정제 |
+| 카테고리 분류 | Groq LLaMA | 항목명 분석 → 카테고리 자동 태깅 |
+| 그래프 구성 | Neo4j (Cypher) | 지출-카테고리-날짜-패턴 노드/엣지 생성 |
+| 컨텍스트 탐색 | Neo4j GraphRAG | 질의와 관련된 노드 탐색 → 컨텍스트 추출 |
+| AI 응답 생성 | Groq LLaMA 3.3 70B | 컨텍스트 + 예산 정보 → 개인화 조언 |
+| 알림 발송 | SendGrid / Expo Push API | 예산 초과 / 일일 소비 조언 전송 |
+
+---
+
+## 🏗 아키텍처 (Architecture)
 
 ![아키텍처](frontend/assets/가계부%20아키텍처%20최종.png)
 
