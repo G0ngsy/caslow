@@ -383,3 +383,24 @@ export async function deleteDeposit(goalId: string, depositId: string) {
   if (!response.ok) throw new Error('입금 삭제에 실패했습니다.');
   return response.json();
 }
+
+// 이메일 알림 설정 조회
+export async function getEmailAlert(): Promise<{ email_alert: boolean }> {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/profiles/email-alert`, { headers });
+  if (!response.ok) throw new Error('이메일 알림 설정 조회 실패');
+  return response.json();
+}
+
+// 이메일 알림 설정 변경
+export async function updateEmailAlert(enabled: boolean) {
+  const headers = await getAuthHeader();
+  const response = await fetch(`${BASE_URL}/profiles/email-alert`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({ email_alert: enabled }),
+  });
+  if (!response.ok) throw new Error('이메일 알림 설정 변경 실패');
+  return response.json();
+}
+}

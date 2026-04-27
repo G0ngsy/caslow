@@ -19,7 +19,10 @@ def get_user_id(authorization: str) -> str:
         raise HTTPException(status_code=401, detail="인증이 필요합니다.")
 
 class PushTokenRequest(BaseModel):
-    push_token: str  # 푸시 토큰
+    push_token: str
+
+class EmailAlertRequest(BaseModel):
+    email_alert: bool
 
 # ✅ 푸시 토큰 저장 (POST /profiles/push-token)
 @router.post("/push-token")
@@ -51,3 +54,32 @@ def save_push_token(request: PushTokenRequest, authorization: str = Header(...))
             .execute()
 
     return {"success": True, "message": "푸시 토큰 저장 완료"}
+
+
+# ✅ 이메일 알림 설정 조회 (GET /profiles/email-alert)
+@router.get("/email-alert")
+def get_email_alert(authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    existing = authed_supabase.table("profiles").select("email_alert").eq("user_id", user_id).execute()
+    if existing.data:
+        return {"email_alert": existing.data[0].get("email_alert", True)}
+    return {"email_alert": True}
+
+
+# ✅ 이메일 알림 설정 변경 (PATCH /profiles/email-alert)
+@router.patch("/email-alert")
+def update_email_alert(request: EmailAlertRequest, authorization: str = Header(...)):
+    user_id = get_user_id(authorization)
+    token = authorization.replace("Bearer ", "")
+    authed_supabase = get_supabase_with_token(token)
+
+    existing = authed_supabase.table("profiles").select("user_id").eq("user_id", user_id).execute()
+    if existing.data:
+        authed_supabase.table("profiles").update({"email_alert": request.email_alert}).eq("user_id", user_id).execute()
+    else:
+        authed_supabase.table("profiles").insert({"user_id": user_id, "email_alert": request.email_alert}).execute()
+
+    return {"success": True, "email_alert": request.email_alert}
