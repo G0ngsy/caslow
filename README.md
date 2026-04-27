@@ -47,15 +47,25 @@
 
 **Frontend**
 
-React Native, TypeScript, Expo, React Navigation, expo-notifications, expo-image-picker, react-native-gifted-charts
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
+![React Navigation](https://img.shields.io/badge/React_Navigation-7B11F1?style=for-the-badge&logo=react-navigation&logoColor=white)
 
 **Backend & AI**
 
-Python, FastAPI, Groq API (LLaMA 3.3 70B / llama-4-scout), Neo4j Aura, APScheduler, pandas
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq_API-F55036?style=for-the-badge&logo=groq&logoColor=white)
+![Neo4j](https://img.shields.io/badge/Neo4j_Aura-4581C3?style=for-the-badge&logo=neo4j&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 
 **Infrastructure**
 
-Supabase (PostgreSQL + Auth), SendGrid SMTP, Expo Push API, Render, Vercel, Android Studio
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Android Studio](https://img.shields.io/badge/Android_Studio-3DDC84?style=for-the-badge&logo=android-studio&logoColor=white)
 
 **세부 기술 리스트**
 
