@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch } from 'react-native';
+import CoinLoader from '../components/CoinLoader';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -12,8 +13,9 @@ import LogoutConfirmModal from './modals/LogoutConfirmModal';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import {
-  getCategories, createCategory, deleteCategory,deleteExpensesByMemo,getBudget, saveBudget,
-  getRecurringExpenses, createRecurringExpense, deleteRecurringExpense,createExpense,withdrawAccount
+  getCategories, createCategory, deleteCategory, deleteExpensesByMemo, getBudget, saveBudget,
+  getRecurringExpenses, createRecurringExpense, deleteRecurringExpense, createExpense, withdrawAccount,
+  getEmailAlert, updateEmailAlert,
 } from '../lib/api';
 
 // 카테고리 이름 → 아이콘 자동 매핑
@@ -55,13 +57,18 @@ export default function SettingScreen() {
   const [withdrawModalVisible, setWithdrawModalVisible] = useState(false);
   // 삭제할 정기 지출 ID (null이면 모달 닫힘)
   const [deleteRecurringId, setDeleteRecurringId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [emailAlert, setEmailAlert] = useState(true);
 
   // 화면 포커스될 때마다 데이터 새로 불러오기
   useFocusEffect(
     useCallback(() => {
-      fetchCategories();
-      fetchRecurring();
-      fetchBudget();
+      const load = async () => {
+        setLoading(true);
+        await Promise.all([fetchCategories(), fetchRecurring(), fetchBudget(), fetchEmailAlert()]);
+        setLoading(false);
+      };
+      load();
     }, [])
   );
 
@@ -72,6 +79,27 @@ const fetchBudget = async () => {
     setBudget(data.amount);
   } catch (error) {
     console.error('예산 불러오기 실패:', error);
+  }
+};
+
+// 이메일 알림 설정 불러오기
+const fetchEmailAlert = async () => {
+  try {
+    const data = await getEmailAlert();
+    setEmailAlert(data.email_alert);
+  } catch (error) {
+    console.error('이메일 알림 설정 불러오기 실패:', error);
+  }
+};
+
+// 이메일 알림 토글
+const handleToggleEmailAlert = async (value: boolean) => {
+  setEmailAlert(value);
+  try {
+    await updateEmailAlert(value);
+  } catch (error) {
+    setEmailAlert(!value);
+    Alert.alert('알림', '설정 변경에 실패했습니다.');
   }
 };
 
@@ -222,6 +250,14 @@ const handleSaveBudget = async (amount: number) => {
   }
 };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <CoinLoader size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header title="설정" />
@@ -301,6 +337,20 @@ const handleSaveBudget = async (amount: number) => {
               </View>
             ))
           )}
+        </View>
+
+        {/* 이메일 알림 */}
+        <View style={styles.logoutCard}>
+          <View style={styles.logoutIconBox}>
+            <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+          </View>
+          <Text style={[styles.logoutText, { color: Colors.textDark, flex: 1 }]}>매일 소비 조언 이메일</Text>
+          <Switch
+            value={emailAlert}
+            onValueChange={handleToggleEmailAlert}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+            thumbColor={Colors.white}
+          />
         </View>
 
         {/* 로그아웃 */}

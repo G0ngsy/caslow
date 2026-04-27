@@ -49,9 +49,15 @@ def send_daily_email_advice():
     users = supabase_admin.auth.admin.list_users()
 
     for user in users:
-        user_email = user.email  # email → user_email
+        user_email = user.email
         user_id = user.id
         if not user_email:
+            continue
+
+        # 이메일 알림 꺼놓은 유저 스킵
+        profile = supabase_admin.table("profiles").select("email_alert").eq("user_id", user_id).execute()
+        if profile.data and profile.data[0].get("email_alert") is False:
+            print(f"[이메일] {user_email} - 알림 꺼짐, 스킵")
             continue
 
         # 유저별 어제 지출 조회 (RLS 우회를 위해 admin 클라이언트 사용)
