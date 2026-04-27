@@ -7,7 +7,6 @@ from typing import List
 from groq import Groq
 from database import supabase, get_supabase_with_token
 from datetime import datetime
-import calendar
 import os
 from dotenv import load_dotenv
 from graph_rag import graph_rag
@@ -94,20 +93,20 @@ def get_insight(authorization: str = Header(...)):
     # Supabase에서 예산 및 이번 달 총 지출 조회
     now = datetime.now()
     month_start = now.strftime("%Y-%m-01")
-    last_day = calendar.monthrange(now.year, now.month)[1]
-    month_end = now.strftime(f"%Y-%m-{last_day:02d}")
+    today = now.strftime("%Y-%m-%d")
     budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0
-    month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).gte("date", month_start).lte("date", month_end).execute()
+    month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).gte("date", month_start).lte("date", today).execute()
     total_spent = sum(e["amount"] for e in month_expenses.data) if month_expenses.data else 0
 
     budget_info = ""
     if budget_amount > 0:
+        percent_used = round((total_spent / budget_amount) * 100)
         over = total_spent - budget_amount
         if over > 0:
-            budget_info = f"\n⚠️ 예산 초과: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 ({over:,}원 초과)"
+            budget_info = f"\n⚠️ 예산 초과: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 ({percent_used}% 사용, {over:,}원 초과)"
         else:
-            budget_info = f"\n✅ 예산 현황: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 (잔여 {budget_amount - total_spent:,}원)"
+            budget_info = f"\n✅ 예산 현황: 월 예산 {budget_amount:,}원 중 {total_spent:,}원 지출 ({percent_used}% 사용, 잔여 {budget_amount - total_spent:,}원)"
 
     # Neo4j에서 지출 패턴 탐색 (유저 데이터만)
     graph_context = graph_rag.search("지출 패턴 분석 절약", user_id)
@@ -123,6 +122,7 @@ def get_insight(authorization: str = Header(...)):
                 "role": "system",
                 "content": """당신은 재무 분석 AI입니다. [언어 규칙] 반드시 한국어로만 답변하세요. 영어, 일본어, 태국어, 중국어 등 어떤 외국어도 절대 사용하지 마세요.
 사용자의 지출 데이터를 분석해서 2~3줄의 간결한 인사이트를 제공해주세요.
+예산 현황(금액, 퍼센트)은 반드시 제공된 수치를 그대로 사용하고 절대 직접 계산하지 마세요.
 예산 초과 여부가 있으면 반드시 언급하고, 구체적인 금액과 카테고리를 언급하고, 절약 팁을 한 가지 제안해주세요."""
             },
             {

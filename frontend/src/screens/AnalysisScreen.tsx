@@ -32,7 +32,6 @@ function formatAmount(amount: number): string {
 
 export default function AnalysisScreen() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [selectedPoint, setSelectedPoint] = useState<{ month: string; amount: number } | null>(null);
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -236,20 +235,8 @@ export default function AnalysisScreen() {
         {/* 월별 지출 추이 - 라인 차트 */}
         <View style={styles.card}>
           {/* 타이틀 + 선택된 월 정보 */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <View style={{ marginBottom: 4 }}>
             <Text style={styles.cardTitle}>월별 지출 추이</Text>
-            {selectedPoint && (
-                <Text style={{ 
-                  color: Colors.primary, 
-                  fontSize: 12,        // 월(Month) 글씨는 살짝 작게
-                  fontWeight: 'bold', 
-                  textAlign: 'right',  // 오른쪽 정렬
-                  lineHeight: 18       // 줄 간격 조절
-                }}>
-      {selectedPoint.month}{"\n"}
-      <Text style={{ fontSize: 15 }}>₩{formatAmount(selectedPoint.amount)}</Text>
-    </Text>
-            )}
           </View>
 
           <LineChart
@@ -262,9 +249,7 @@ export default function AnalysisScreen() {
             startOpacity={0.18}
             endOpacity={0.01}
             dataPointsColor={Colors.primary}
-            dataPointsRadius={4}
-            focusedDataPointColor={Colors.accent}
-            focusedDataPointRadius={6}
+            dataPointsRadius={5}
             noOfSections={3}
             maxValue={maxValue}
             height={160}
@@ -281,8 +266,27 @@ export default function AnalysisScreen() {
             hideRules={false}
             rulesColor="#E3F2FF"
             rulesType="solid"
-            onPress={(item: any) => {
-              setSelectedPoint({ month: item.label, amount: item.value });
+            pointerConfig={{
+              pointerStripHeight: 140,
+              pointerStripColor: Colors.primary,
+              pointerStripWidth: 1,
+              strokeDashArray: [4, 3],
+              pointerColor: Colors.primary,
+              radius: 6,
+              pointerLabelWidth: 90,
+              pointerLabelHeight: 44,
+              activatePointersOnLongPress: false,
+              autoAdjustPointerLabelPosition: true,
+              pointerLabelComponent: (items: any[]) => {
+                const it = items?.[0];
+                if (!it) return null;
+                return (
+                  <View style={styles.pointerLabel}>
+                    <Text style={styles.pointerMonth}>{it.label}</Text>
+                    <Text style={styles.pointerAmount}>₩{formatAmount(it.value)}</Text>
+                  </View>
+                );
+              },
             }}
           />
         </View>
@@ -443,24 +447,26 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   pointerLabel: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#EAF4FF',
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
     alignItems: 'center',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    shadowColor: '#1A3A5C',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 3,
   },
   pointerMonth: {
-    color: 'rgba(255,255,255,0.75)',
+    color: '#437CA1',
     fontSize: 10,
     marginBottom: 2,
   },
   pointerAmount: {
-    color: Colors.white,
+    color: Colors.primary,
     fontSize: 13,
     fontWeight: 'bold',
   },

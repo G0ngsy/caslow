@@ -66,6 +66,7 @@
 ![Render](https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Android Studio](https://img.shields.io/badge/Android_Studio-3DDC84?style=for-the-badge&logo=android-studio&logoColor=white)
+![UptimeRobot](https://img.shields.io/badge/UptimeRobot-3BD671?style=for-the-badge&logo=uptimerobot&logoColor=white)
 
 **세부 기술 리스트**
 
@@ -81,6 +82,7 @@
 | 이메일 | SendGrid SMTP, sendgrid (Python) |
 | 스케줄러 | APScheduler, pandas (CSV 파싱) |
 | 배포 | Render (백엔드), Vercel (웹), Android Studio APK |
+| 모니터링 | UptimeRobot (Render 슬리프 방지 헬스체크) |
 
 ---
 
@@ -101,7 +103,7 @@
 
 ## 🏗 아키텍처 (Architecture)
 
-![아키텍처](frontend/assets/가계부%20아키텍처%20최종.png)
+![아키텍처](frontend/assets/가계부%20시스템%20아키텍처.png)
 
 ---
 
