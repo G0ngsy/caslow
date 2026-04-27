@@ -403,4 +403,3 @@ export async function updateEmailAlert(enabled: boolean) {
   if (!response.ok) throw new Error('이메일 알림 설정 변경 실패');
   return response.json();
 }
-}
