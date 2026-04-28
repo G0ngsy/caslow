@@ -133,7 +133,7 @@ const handleExcel = async () => {
     const uploadResult = await uploadExcel(fileObj);
 
     Alert.alert('알림',`${uploadResult.saved}건의 지출이 저장되었습니다!`);
-    navigation.navigate('HomeMain' as never);
+    navigation.getParent()?.navigate('홈' as never);
 
   } catch (error) {
     console.error('엑셀 가져오기 실패:', error);

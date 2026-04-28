@@ -108,6 +108,43 @@
 
 ---
 
+## 📱 주요 화면 미리보기
+
+<table>
+  <tr>
+    <td align="center"><b>홈</b></td>
+    <td align="center"><b>지출 입력</b></td>
+    <td align="center"><b>CSV 가져오기</b></td>
+  </tr>
+  <tr>
+    <td><img src="frontend/assets/홈.gif" width="220"/></td>
+    <td><img src="frontend/assets/지출입력.gif" width="220"/></td>
+    <td><img src="frontend/assets/CSV가져오기.gif" width="220"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>분석</b></td>
+    <td align="center"><b>AI 채팅</b></td>
+    <td align="center"><b>목표</b></td>
+  </tr>
+  <tr>
+    <td><img src="frontend/assets/분석.gif" width="220"/></td>
+    <td><img src="frontend/assets/AI채팅.gif" width="220"/></td>
+    <td><img src="frontend/assets/목표.gif" width="220"/></td>
+  </tr>
+  <tr>
+    <td align="center"><b>설정</b></td>
+    <td align="center"><b>회원가입 / 로그인</b></td>
+    <td align="center"></td>
+  </tr>
+  <tr>
+    <td><img src="frontend/assets/설정.gif" width="220"/></td>
+    <td><img src="frontend/assets/회원가입.gif" width="220"/></td>
+    <td></td>
+  </tr>
+</table>
+
+---
+
 ## 📁 폴더 구조
 
 ```
