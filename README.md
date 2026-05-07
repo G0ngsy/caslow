@@ -4,6 +4,7 @@
 
 자연어 대화만으로 소비 패턴을 분석하고 재무 목표를 관리해주는 AI 가계부 앱입니다.
 
+📱 Android APK 다운로드: GitHub Releases v1.0.0
 🌐 **웹 데모**: [caslow.vercel.app](https://caslow.vercel.app)
 
 ---
