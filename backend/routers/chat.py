@@ -43,8 +43,14 @@ def chat(request: ChatRequest, authorization: str = Header(...)):
     token = authorization.replace("Bearer ", "")
     authed_supabase = get_supabase_with_token(token)
 
-    # Supabase에서 예산 직접 조회
-    budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
+    # Supabase에서 현재 월 예산 직접 조회
+    now = datetime.now()
+    budget_row = authed_supabase.table("budgets") \
+        .select("amount") \
+        .eq("user_id", user_id) \
+        .eq("year", now.year) \
+        .eq("month", now.month) \
+        .execute()
     print(f"🔍 예산 조회 결과 - user_id: {user_id}, data: {budget_row.data}")
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 500000
     print(f"💰 최종 예산: {budget_amount}")
@@ -94,7 +100,12 @@ def get_insight(authorization: str = Header(...)):
     now = datetime.now()
     month_start = now.strftime("%Y-%m-01")
     today = now.strftime("%Y-%m-%d")
-    budget_row = authed_supabase.table("budgets").select("amount").eq("user_id", user_id).execute()
+    budget_row = authed_supabase.table("budgets") \
+        .select("amount") \
+        .eq("user_id", user_id) \
+        .eq("year", now.year) \
+        .eq("month", now.month) \
+        .execute()
     budget_amount = budget_row.data[0]["amount"] if budget_row.data else 0
     month_expenses = authed_supabase.table("expenses").select("amount").eq("user_id", user_id).gte("date", month_start).lte("date", today).execute()
     total_spent = sum(e["amount"] for e in month_expenses.data) if month_expenses.data else 0

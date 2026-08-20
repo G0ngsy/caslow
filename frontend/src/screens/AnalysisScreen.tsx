@@ -4,9 +4,9 @@ import { Colors } from '../constants/colors';
 import { categoryConfig } from '../constants/categories';
 import Header from '../components/Header';
 import { useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { getExpensesByCategory, getExpensesByMonth, getCategories, getAiInsight } from '../lib/api';
+import { getExpensesByCategory, getExpensesByMonth, getAiInsight } from '../lib/api';
 import { View, Text, StyleSheet, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import CoinLoader from '../components/CoinLoader';
 
@@ -31,6 +31,9 @@ function formatAmount(amount: number): string {
 
 
 export default function AnalysisScreen() {
+  const navigation = useNavigation<any>();
+  const now = new Date();
+  const [viewDate, setViewDate] = useState(() => new Date(now.getFullYear(), now.getMonth(), 1));
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
@@ -43,22 +46,30 @@ export default function AnalysisScreen() {
   // 탭에 따라 카테고리 데이터 필터링
   // [정기] 메모가 있으면 정기 지출, 없으면 변동 지출
   const filteredCategoryData = categoryData; // API에서 받은 데이터 그대로 사용
+  const selectedYear = viewDate.getFullYear();
+  const selectedMonth = viewDate.getMonth() + 1;
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
   // 탭 필터는 API 레벨에서 처리해야 정확해요
   
   // 화면 포커스될 때마다 데이터 새로 불러오기
   useFocusEffect(
     useCallback(() => {
-      fetchData();
-    }, [expenseTab])
+      fetchData(selectedYear, selectedMonth);
+    }, [expenseTab, selectedYear, selectedMonth])
   );
 
-  const fetchData = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      fetchInsight();
+    }, [])
+  );
+
+  const fetchData = async (year: number, month: number) => {
   setLoading(true);
   try {
-    const [categoryRes, monthlyRes, categoriesRes] = await Promise.all([
-      getExpensesByCategory(expenseTab),
-      getExpensesByMonth(),
-      getCategories(),
+    const [categoryRes, monthlyRes] = await Promise.all([
+      getExpensesByCategory(expenseTab, year, month),
+      getExpensesByMonth(year, month),
     ]);
 
     // 카테고리 데이터 변환 (categories.ts 공통 설정 사용)
@@ -76,9 +87,11 @@ export default function AnalysisScreen() {
     // 월별 데이터 변환
     const formattedMonthly = monthlyRes.map((item: any) => ({
       month: formatMonth(item.month),
+      monthKey: item.month,
       amount: item.amount,
     }));
     setMonthlyData(formattedMonthly);
+    setSelectedIndex(null);
 
   } catch (error) {
     console.error('분석 데이터 불러오기 실패:', error);
@@ -86,7 +99,9 @@ export default function AnalysisScreen() {
     setLoading(false);
   }
 
-  // AI 인사이트는 별도로 불러오기 (시간이 걸려서 따로 처리)
+};
+
+const fetchInsight = async () => {
   setInsightLoading(true);
   try {
     const insight = await getAiInsight();
@@ -98,6 +113,15 @@ export default function AnalysisScreen() {
     setInsightLoading(false);
   }
 };
+
+  const moveMonth = (offset: number) => {
+    setViewDate(current => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  };
+
+  const moveToCurrentMonth = () => {
+    const current = new Date();
+    setViewDate(new Date(current.getFullYear(), current.getMonth(), 1));
+  };
      
 
   // 총 지출 계산
@@ -115,6 +139,13 @@ export default function AnalysisScreen() {
   const lineData = monthlyData.map(item => ({
     value: item.amount,
     label: item.month,
+    onPress: () => {
+      const [year, month] = item.monthKey.split('-').map(Number);
+      navigation.navigate('홈', {
+        screen: 'HomeMain',
+        params: { year, month },
+      });
+    },
   }));
 
   const maxBar = Math.max(...monthlyData.map((d: any) => d.amount), 0);
@@ -136,6 +167,28 @@ export default function AnalysisScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 16, paddingBottom: 40 }}
       >
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 16 }}>
+          <TouchableOpacity accessibilityLabel="이전 달" onPress={() => moveMonth(-1)}>
+            <Ionicons name="chevron-back" size={24} color={Colors.primary} />
+          </TouchableOpacity>
+          <Text style={{ minWidth: 110, textAlign: 'center', color: Colors.textDark, fontSize: 17, fontWeight: 'bold' }}>
+            {selectedYear}년 {selectedMonth}월
+          </Text>
+          <TouchableOpacity
+            accessibilityLabel="다음 달"
+            disabled={isCurrentMonth}
+            onPress={() => moveMonth(1)}
+            style={{ opacity: isCurrentMonth ? 0.3 : 1 }}
+          >
+            <Ionicons name="chevron-forward" size={24} color={Colors.primary} />
+          </TouchableOpacity>
+          {!isCurrentMonth && (
+            <TouchableOpacity onPress={moveToCurrentMonth}>
+              <Text style={{ color: Colors.primary, fontSize: 12, fontWeight: 'bold' }}>이번 달</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* 카테고리별 지출 - 도넛 차트 */}
         <View style={styles.card}>
@@ -295,7 +348,7 @@ export default function AnalysisScreen() {
           <View style={styles.aiCard}>
             <View style={styles.aiHeader}>
               <Ionicons name="bulb-outline" size={18} color={Colors.primary} />
-              <Text style={styles.aiTitle}>AI 인사이트</Text>
+              <Text style={styles.aiTitle}>이번 달 AI 인사이트</Text>
             </View>
             {insightLoading ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

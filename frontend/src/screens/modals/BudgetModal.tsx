@@ -4,22 +4,27 @@ import { useState, useEffect } from 'react';
 interface BudgetModalProps {
   visible: boolean;
   currentBudget: number;
-  onSave: (budget: number) => void;
+  onSave: (budget: number) => Promise<boolean> | boolean;
   onClose: () => void;
 }
 
 export default function BudgetModal({ visible, currentBudget, onSave, onClose }: BudgetModalProps) {
   const [value, setValue] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (visible) setValue(currentBudget.toString());
   }, [visible, currentBudget]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const num = parseInt(value.replace(/,/g, ''), 10);
-    if (!isNaN(num) && num > 0) {
-      onSave(num);
-      onClose();
+    if (isNaN(num) || num <= 0 || saving) return;
+    setSaving(true);
+    try {
+      const saved = await onSave(num);
+      if (saved) onClose();
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -47,8 +52,8 @@ export default function BudgetModal({ visible, currentBudget, onSave, onClose }:
             />
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveText}>저장</Text>
+          <TouchableOpacity style={[styles.saveButton, saving && { opacity: 0.5 }]} onPress={handleSave} disabled={saving}>
+            <Text style={styles.saveText}>{saving ? '저장 중...' : '저장'}</Text>
           </TouchableOpacity>
         </TouchableOpacity>
       </TouchableOpacity>

@@ -14,10 +14,22 @@ async function getAuthHeader() {
   };
 }
 
+async function getApiError(response: Response, fallback: string): Promise<Error> {
+  try {
+    const body = await response.json();
+    return new Error(typeof body?.detail === 'string' ? body.detail : fallback);
+  } catch {
+    return new Error(fallback);
+  }
+}
+
 // 지출 목록 조회
-export async function getExpenses() {
+export async function getExpenses(year?: number, month?: number) {
   const headers = await getAuthHeader();
-  const response = await fetch(`${BASE_URL}/expenses/`, { headers });
+  const params = year !== undefined && month !== undefined
+    ? `?year=${year}&month=${month}`
+    : '';
+  const response = await fetch(`${BASE_URL}/expenses/${params}`, { headers });
   if (!response.ok) throw new Error('지출 목록을 불러오지 못했습니다.');
   return response.json();
 }
@@ -36,7 +48,7 @@ export async function createExpense(data: {
     headers,
     body: JSON.stringify(data),
   });
-  if (!response.ok) throw new Error('지출 추가에 실패했습니다.');
+  if (!response.ok) throw await getApiError(response, '지출 추가에 실패했습니다.');
   return response.json();
 }
 
@@ -55,9 +67,7 @@ export async function updateExpense(id: string, data: {
     body: JSON.stringify(data),
   });
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error('지출 수정 실패 상세:', response.status, errorBody);
-    throw new Error('지출 수정에 실패했습니다.');
+    throw await getApiError(response, '지출 수정에 실패했습니다.');
   }
   return response.json();
 }
@@ -74,17 +84,23 @@ export async function deleteExpense(id: string) {
 }
 
 // 카테고리별 지출 합계 조회 (탭 필터 포함)
-export async function getExpensesByCategory(tab: 'all' | 'fixed' | 'variable' = 'all') {
+export async function getExpensesByCategory(
+  tab: 'all' | 'fixed' | 'variable' = 'all',
+  year?: number,
+  month?: number,
+) {
   const headers = await getAuthHeader();
-  const response = await fetch(`${BASE_URL}/expenses/analysis/category?tab=${tab}`, { headers });
+  const period = year !== undefined && month !== undefined ? `&year=${year}&month=${month}` : '';
+  const response = await fetch(`${BASE_URL}/expenses/analysis/category?tab=${tab}${period}`, { headers });
   if (!response.ok) throw new Error('카테고리별 지출을 불러오지 못했습니다.');
   return response.json();
 }
 
 // 월별 지출 합계 조회
-export async function getExpensesByMonth() {
+export async function getExpensesByMonth(year?: number, month?: number) {
   const headers = await getAuthHeader();
-  const response = await fetch(`${BASE_URL}/expenses/analysis/monthly`, { headers });
+  const period = year !== undefined && month !== undefined ? `?year=${year}&month=${month}` : '';
+  const response = await fetch(`${BASE_URL}/expenses/analysis/monthly${period}`, { headers });
   if (!response.ok) throw new Error('월별 지출을 불러오지 못했습니다.');
   return response.json();
 }
@@ -238,22 +254,25 @@ export async function deleteRecurringByTitle(title: string) {
 }
 
 // 월 예산 조회
-export async function getBudget() {
+export async function getBudget(year?: number, month?: number) {
   const headers = await getAuthHeader();
-  const response = await fetch(`${BASE_URL}/budget/`, { headers });
+  const params = year !== undefined && month !== undefined
+    ? `?year=${year}&month=${month}`
+    : '';
+  const response = await fetch(`${BASE_URL}/budget/${params}`, { headers });
   if (!response.ok) throw new Error('예산을 불러오지 못했습니다.');
   return response.json();
 }
 
 // 월 예산 저장
-export async function saveBudget(amount: number) {
+export async function saveBudget(amount: number, year?: number, month?: number) {
   const headers = await getAuthHeader();
   const response = await fetch(`${BASE_URL}/budget/`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ amount }),
+    body: JSON.stringify({ amount, year, month }),
   });
-  if (!response.ok) throw new Error('예산 저장에 실패했습니다.');
+  if (!response.ok) throw await getApiError(response, '예산 저장에 실패했습니다.');
   return response.json();
 }
 

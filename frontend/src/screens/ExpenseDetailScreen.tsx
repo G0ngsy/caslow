@@ -146,7 +146,7 @@ export default function ExpenseDetailScreen() {
   const [recurringModalVisible, setRecurringModalVisible] = useState(false);
 
   // 홈 화면에서 전달받은 지출 데이터
-  const { expense } = route.params;
+  const { expense, returnYear, returnMonth } = route.params;
   const config = categoryConfig[expense.category] || { icon: 'card', color: '#6B7280', label: '기타' };
 
   // 삭제 함수
@@ -231,7 +231,7 @@ const handleSkipRecurringDelete = () => {
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.editButton}
-            onPress={() => navigation.navigate('ExpenseForm', { expense })}
+            onPress={() => navigation.navigate('ExpenseForm', { expense, returnYear, returnMonth })}
           >
             <Ionicons name="pencil-outline" size={16} color={Colors.white} />
             <Text style={styles.editButtonText}>수정</Text>

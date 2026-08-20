@@ -108,9 +108,11 @@ const handleSaveBudget = async (amount: number) => {
   try {
     await saveBudget(amount);
     setBudget(amount);
+    return true;
   } catch (error) {
     console.error('예산 저장 실패:', error);
     Alert.alert('알림','예산 저장에 실패했습니다.');
+    return false;
   }
 };
 

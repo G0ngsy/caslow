@@ -1,14 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import CoinLoader from '../components/CoinLoader';
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
-import { getExpenses, getBudget , getCategories  } from '../lib/api';
-import { useNavigation } from '@react-navigation/native';
-import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+import { getExpenses, getBudget, getCategories, saveBudget } from '../lib/api';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { categoryConfig, getCategoryIcon, categoryKeyMap } from '../constants/categories';
+import BudgetModal from './modals/BudgetModal';
 
 // 재테크 명언 목록
 const quotes = [
@@ -397,31 +396,65 @@ export default function HomeScreen() {
   const [expenses, setExpenses] = useState<any[]>([]);
   // 데이터 로딩 중 여부
   const [loadingData, setLoadingData] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const requestIdRef = useRef(0);
+  const budgetRequestIdRef = useRef(0);
+  const now = new Date();
+  const [viewDate, setViewDate] = useState(
+    () => new Date(now.getFullYear(), now.getMonth(), 1)
+  );
   // categories 상태 추가
   const [categories, setCategories] = useState<any[]>([
     { key: 'all', label: '전체', icon: 'apps' },
   ]);
 
   const [budget, setBudget] = useState(0);
+  const [budgetIsSet, setBudgetIsSet] = useState(false);
+  const [budgetError, setBudgetError] = useState(false);
+  const [budgetModalVisible, setBudgetModalVisible] = useState(false);
 
-  // 화면 포커스될 때마다 지출 목록 새로 불러오기
-// 지출 추가/수정/삭제 후 돌아올 때 자동 갱신
-useFocusEffect(
-  useCallback(() => {
-    fetchExpenses();
-    fetchBudget();
-    fetchCategories();
-  }, [])
-);
+  const selectedYear = viewDate.getFullYear();
+  const selectedMonth = viewDate.getMonth() + 1;
+  const isCurrentMonth = selectedYear === now.getFullYear()
+    && selectedMonth === now.getMonth() + 1;
+
+  useEffect(() => {
+    const year = Number(route.params?.year);
+    const month = Number(route.params?.month);
+    if (Number.isInteger(year) && Number.isInteger(month) && month >= 1 && month <= 12) {
+      setViewDate(new Date(year, month - 1, 1));
+    }
+  }, [route.params?.year, route.params?.month]);
 
 // 예산 불러오기
-const fetchBudget = async () => {
+const fetchBudget = async (year = selectedYear, month = selectedMonth) => {
+  const requestId = ++budgetRequestIdRef.current;
+  setBudget(0);
+  setBudgetIsSet(false);
+  setBudgetError(false);
   try {
-    const data = await getBudget();
-    setBudget(data.amount);
+    const data = await getBudget(year, month);
+    if (requestId === budgetRequestIdRef.current) {
+      setBudget(data.amount);
+      setBudgetIsSet(data.is_set === true);
+    }
   } catch (error) {
     console.error('예산 불러오기 실패:', error);
+    if (requestId === budgetRequestIdRef.current) setBudgetError(true);
+  }
+};
+
+const handleSaveBudget = async (amount: number) => {
+  try {
+    const data = await saveBudget(amount, selectedYear, selectedMonth);
+    setBudget(data.amount);
+    setBudgetIsSet(true);
+    return true;
+  } catch (error) {
+    Alert.alert('알림', error instanceof Error ? error.message : '예산 저장에 실패했습니다.');
+    return false;
   }
 };
 
@@ -445,30 +478,46 @@ const fetchCategories = async () => {
 };
 
   // 백엔드 API에서 지출 목록 가져오는 함수
-  const fetchExpenses = async () => {
+  const fetchExpenses = async (year = selectedYear, month = selectedMonth) => {
+    const requestId = ++requestIdRef.current;
     setLoadingData(true);
+    setLoadError('');
+    setExpenses([]);
     try {
-      const data = await getExpenses();
-      setExpenses(data);
+      const data = await getExpenses(year, month);
+      if (requestId === requestIdRef.current) setExpenses(data);
     } catch (error) {
       console.error('지출 불러오기 실패:', error);
+      if (requestId === requestIdRef.current) setLoadError('장부를 불러오지 못했습니다.');
     } finally {
-      setLoadingData(false);
+      if (requestId === requestIdRef.current) setLoadingData(false);
     }
   };
 
+  // 지출 추가/수정/삭제 후 복귀하거나 조회 월이 바뀌면 다시 조회
+  useFocusEffect(
+    useCallback(() => {
+      fetchExpenses(selectedYear, selectedMonth);
+      fetchBudget(selectedYear, selectedMonth);
+      fetchCategories();
+    }, [selectedYear, selectedMonth])
+  );
+
+  const moveMonth = (offset: number) => {
+    setViewDate(current => new Date(current.getFullYear(), current.getMonth() + offset, 1));
+  };
+
+  const moveToCurrentMonth = () => {
+    const today = new Date();
+    setViewDate(new Date(today.getFullYear(), today.getMonth(), 1));
+  };
 
 
  // 오늘 날짜 (한국 시간 기준)
-const now = new Date();
 const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-// 이번 달 + 오늘 이하 날짜만 필터링
-const currentMonth = now.toISOString().slice(0, 7);
-
-const validExpenses = expenses.filter((e: any) =>
-  e.date && e.date.startsWith(currentMonth) && e.date <= today
-);
+// 서버가 선택 월만 반환한다. 현재 월에서는 미래 날짜를 화면에서도 한 번 더 제외한다.
+const validExpenses = expenses.filter((e: any) => e.date && (!isCurrentMonth || e.date <= today));
 
 // 선택된 카테고리로 지출 필터링 (한글/영문 둘 다 매칭)
 const filteredExpenses = selectedCategory === 'all'
@@ -485,11 +534,7 @@ const sortedExpenses = [...filteredExpenses].sort((a, b) => {
   return a.date.localeCompare(b.date);
 });
 
-const thisMonthExpenses = expenses.filter((e: any) => 
-  e.date && e.date.startsWith(currentMonth)
-);
-
- // 이번 달 총 지출 계산 (오늘 이하만)
+ // 선택 월 총 지출 계산 (현재 월은 오늘 이하만)
 const totalAmount = validExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
 
  // 오늘/지난으로 날짜별 그룹화
@@ -500,8 +545,8 @@ sortedExpenses.forEach(e => {
   grouped[label].push(e);
 });
 
-  // 로딩 중일 때 스피너 표시
-  if (loadingData) {
+  // 최초 로딩 중일 때 스피너 표시
+  if (loadingData && expenses.length === 0 && !loadError) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <CoinLoader size="large" />
@@ -515,12 +560,34 @@ sortedExpenses.forEach(e => {
       <Header showLogo showIcons />
       <ScrollView showsVerticalScrollIndicator={false}>
 
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingTop: 12 }}>
+        <TouchableOpacity accessibilityLabel="이전 달" onPress={() => moveMonth(-1)}>
+          <Ionicons name="chevron-back" size={26} color={Colors.primary} />
+        </TouchableOpacity>
+        <Text style={{ minWidth: 110, textAlign: 'center', color: Colors.textDark, fontSize: 18, fontWeight: 'bold' }}>
+          {selectedYear}년 {selectedMonth}월
+        </Text>
+        <TouchableOpacity
+          accessibilityLabel="다음 달"
+          disabled={isCurrentMonth}
+          onPress={() => moveMonth(1)}
+          style={{ opacity: isCurrentMonth ? 0.3 : 1 }}
+        >
+          <Ionicons name="chevron-forward" size={26} color={Colors.primary} />
+        </TouchableOpacity>
+        {!isCurrentMonth && (
+          <TouchableOpacity onPress={moveToCurrentMonth} style={{ paddingHorizontal: 10, paddingVertical: 6 }}>
+            <Text style={{ color: Colors.primary, fontWeight: 'bold' }}>이번 달</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* 예산 초과 경고 배너 */}
       {budget > 0 && totalAmount > budget && (
         <View style={styles.warningBanner}>
           <Ionicons name="warning" size={18} color="#fff" />
           <Text style={styles.warningBannerText}>
-            이번 달 예산을 {(totalAmount - budget).toLocaleString()}원 초과했어요!
+            {selectedMonth}월 예산을 {(totalAmount - budget).toLocaleString()}원 초과했어요!
           </Text>
         </View>
       )}
@@ -537,13 +604,25 @@ sortedExpenses.forEach(e => {
           <View style={styles.summaryHeader}>
             <View style={styles.summaryHeaderLeft}>
               <Ionicons name="wallet-outline" size={20} color={Colors.textSub} />
-              <Text style={styles.summaryLabel}>이번 달 총 지출</Text>
+              <Text style={styles.summaryLabel}>선택한 달 총 지출</Text>
             </View>
             {/* 현재 월 동적으로 표시 */}
-            <Text style={styles.summaryMonth}>{new Date().getMonth() + 1}월</Text>
+            <Text style={styles.summaryMonth}>{selectedYear}.{String(selectedMonth).padStart(2, '0')}</Text>
           </View>
           <Text style={styles.summaryAmount}>₩{formatAmount(totalAmount)}</Text>
-          <Text style={styles.summaryCount}>{thisMonthExpenses.length}건의 지출</Text>
+          <Text style={styles.summaryCount}>{validExpenses.length}건의 지출</Text>
+          <TouchableOpacity
+            onPress={() => budgetError ? fetchBudget(selectedYear, selectedMonth) : setBudgetModalVisible(true)}
+            style={{ alignSelf: 'flex-end', paddingVertical: 6, paddingHorizontal: 2 }}
+          >
+            <Text style={{ color: Colors.accentLight, fontSize: 12, fontWeight: 'bold' }}>
+              {budgetError
+                ? '예산 조회 실패 · 다시 시도'
+                : budgetIsSet
+                  ? `${selectedMonth}월 예산 수정`
+                  : `${selectedMonth}월 예산 설정`}
+            </Text>
+          </TouchableOpacity>
           {budget > 0 && (() => {
             const ratio = totalAmount / budget;
             const isOver = ratio > 1;
@@ -606,7 +685,23 @@ sortedExpenses.forEach(e => {
         {/* 지출 내역 헤더 */}
         <View style={[styles.listHeader, { zIndex: 999 }]}>
           <Text style={styles.listTitle}>지출 내역</Text>
-          <View style={{ zIndex: 999 }}>
+          <View style={{ zIndex: 999, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              accessibilityLabel={`${selectedMonth}월 지출 등록`}
+              onPress={() => navigation.getParent()?.navigate('입력', {
+                screen: 'ExpenseForm',
+                params: {
+                  initialYear: selectedYear,
+                  initialMonth: selectedMonth,
+                  returnYear: selectedYear,
+                  returnMonth: selectedMonth,
+                  formSessionId: Date.now(),
+                },
+              })}
+              style={{ padding: 7, borderRadius: 10, backgroundColor: Colors.primary }}
+            >
+              <Ionicons name="add" size={18} color={Colors.white} />
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.sortButton}
               onPress={() => setShowSortDropdown(!showSortDropdown)}
@@ -658,6 +753,24 @@ sortedExpenses.forEach(e => {
         
 
         {/* 지출 목록 */}
+        {loadError ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
+            <Ionicons name="cloud-offline-outline" size={36} color={Colors.textSub} />
+            <Text style={{ color: Colors.textSub }}>{loadError}</Text>
+            <TouchableOpacity
+              onPress={() => fetchExpenses(selectedYear, selectedMonth)}
+              style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: 10, backgroundColor: Colors.primary }}
+            >
+              <Text style={{ color: Colors.white, fontWeight: 'bold' }}>다시 시도</Text>
+            </TouchableOpacity>
+          </View>
+        ) : sortedExpenses.length === 0 ? (
+          <View style={{ alignItems: 'center', paddingVertical: 40, gap: 8 }}>
+            <Ionicons name="receipt-outline" size={36} color={Colors.textSub} />
+            <Text style={{ color: Colors.textDark, fontWeight: 'bold' }}>{selectedMonth}월 지출 내역이 없습니다.</Text>
+            <Text style={{ color: Colors.textSub }}>다른 달로 이동하거나 새 지출을 등록해 보세요.</Text>
+          </View>
+        ) : null}
         {Object.entries(grouped).map(([label, items]) => (
           <View key={label}>
             <View style={styles.sectionRow}>
@@ -671,7 +784,11 @@ sortedExpenses.forEach(e => {
                 <TouchableOpacity
                   key={expense.id}
                   style={styles.expenseItem}
-                  onPress={() => navigation.navigate('ExpenseDetail', { expense })}
+                  onPress={() => navigation.navigate('ExpenseDetail', {
+                    expense,
+                    returnYear: selectedYear,
+                    returnMonth: selectedMonth,
+                  })}
                 >
                   <View style={[styles.iconBox, { backgroundColor: config.color + '22' }]}>
                     <Ionicons name={config.icon as any} size={22} color={config.color} />
@@ -697,6 +814,12 @@ sortedExpenses.forEach(e => {
           </View>
         ))}
       </ScrollView>
+      <BudgetModal
+        visible={budgetModalVisible}
+        currentBudget={budget}
+        onSave={handleSaveBudget}
+        onClose={() => setBudgetModalVisible(false)}
+      />
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert, KeyboardAvoidingView } from 'react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import Header from '../components/Header';
@@ -18,6 +18,18 @@ function suggestCategory(memo: string): string {
   if (text.match(/쇼핑|옷|신발|올리브영|다이소|쿠팡|구매/)) return 'shopping';
   if (text.match(/넷플릭스|유튜브|스포티파이|구독|멤버십/)) return 'subscription';
   return '';
+}
+
+function isValidDateString(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(year, month - 1, day);
+  return parsed.getFullYear() === year
+    && parsed.getMonth() === month - 1
+    && parsed.getDate() === day;
 }
 
 const styles = StyleSheet.create({
@@ -152,6 +164,8 @@ export default function ExpenseFormScreen() {
   const editingExpense = route.params?.expense;
   const ocrData = route.params?.ocrData;
   const isEditMode = !!editingExpense;
+  const returnYear = Number(route.params?.returnYear || route.params?.initialYear);
+  const returnMonth = Number(route.params?.returnMonth || route.params?.initialMonth);
 
   // 초기값 설정 (수정 모드 > OCR 데이터 > 기본값)
   const [title, setTitle] = useState(
@@ -167,6 +181,11 @@ export default function ExpenseFormScreen() {
     if (editingExpense?.date) return editingExpense.date;
     if (ocrData?.date) return ocrData.date;
     const now = new Date();
+    if (Number.isInteger(returnYear) && Number.isInteger(returnMonth) && returnMonth >= 1 && returnMonth <= 12) {
+      const lastDay = new Date(returnYear, returnMonth, 0).getDate();
+      const day = Math.min(now.getDate(), lastDay);
+      return `${returnYear}-${String(returnMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   });
   const [memo, setMemo] = useState(
@@ -174,8 +193,29 @@ export default function ExpenseFormScreen() {
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [aiSuggestedCategory, setAiSuggestedCategory] = useState('');
+  const [saving, setSaving] = useState(false);
   // DB에서 카테고리 불러오기
   const [categories, setCategories] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!route.params?.formSessionId || isEditMode) return;
+
+    const current = new Date();
+    const initialYear = Number(route.params?.initialYear);
+    const initialMonth = Number(route.params?.initialMonth);
+    let initialDate = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+    if (Number.isInteger(initialYear) && Number.isInteger(initialMonth) && initialMonth >= 1 && initialMonth <= 12) {
+      const day = Math.min(current.getDate(), new Date(initialYear, initialMonth, 0).getDate());
+      initialDate = `${initialYear}-${String(initialMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    setTitle(ocrData?.title || '');
+    setAmount(ocrData?.amount?.toString() || '');
+    setSelectedCategory(ocrData?.category || '');
+    setMemo(ocrData?.memo || '');
+    setDate(ocrData?.date || initialDate);
+    setAiSuggestedCategory('');
+  }, [route.params?.formSessionId]);
 
   useFocusEffect(
   useCallback(() => {
@@ -203,12 +243,23 @@ export default function ExpenseFormScreen() {
 
   // 저장 함수
   const handleSave = async () => {
-  if (!title) {
+  if (!title.trim()) {
     Alert.alert('알림','제목을 입력해주세요.');
     return;
   }
-  if (!amount) {
-    Alert.alert('알림','금액을 입력해주세요.');
+  const parsedAmount = Number(amount);
+  if (!amount || !Number.isInteger(parsedAmount) || parsedAmount <= 0) {
+    Alert.alert('알림','금액은 1원 이상의 숫자로 입력해주세요.');
+    return;
+  }
+  if (!isValidDateString(date)) {
+    Alert.alert('알림','실제 존재하는 날짜를 YYYY-MM-DD 형식으로 입력해주세요.');
+    return;
+  }
+  const today = new Date();
+  const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  if (date > todayString) {
+    Alert.alert('알림','미래 날짜의 지출은 등록할 수 없습니다.');
     return;
   }
   if (!selectedCategory) {
@@ -216,31 +267,43 @@ export default function ExpenseFormScreen() {
     return;
   }
 
+  setSaving(true);
   try {
     if (isEditMode) {
       await updateExpense(editingExpense.id, {
         title,
-        amount: parseInt(amount),
+        amount: parsedAmount,
         category: selectedCategory,
         memo: memo || undefined,
         date,
       });
-      Alert.alert('알림','수정되었습니다!');
-      navigation.navigate('HomeMain');
     } else {
       await createExpense({
         title,
-        amount: parseInt(amount),
+        amount: parsedAmount,
         category: selectedCategory,
         memo: memo || undefined,
         date,
       });
-      Alert.alert('알림','저장되었습니다!');
-      navigation.goBack();
     }
+    const savedDate = date.split('-').map(Number);
+    const navigateToLedger = () => navigation.getParent()?.navigate('홈', {
+        screen: 'HomeMain',
+        params: {
+          year: Number.isInteger(returnYear) ? returnYear : savedDate[0],
+          month: Number.isInteger(returnMonth) ? returnMonth : savedDate[1],
+        },
+      });
+    Alert.alert(
+      '알림',
+      isEditMode ? '수정되었습니다!' : '저장되었습니다!',
+      [{ text: '확인', onPress: navigateToLedger }],
+    );
   } catch (error) {
     console.error('저장 실패:', error);
-    Alert.alert('알림','저장에 실패했습니다.');
+    Alert.alert('알림', error instanceof Error ? error.message : '저장에 실패했습니다.');
+  } finally {
+    setSaving(false);
   }
 };
 
@@ -355,6 +418,7 @@ export default function ExpenseFormScreen() {
             {showDatePicker && (
               <DateTimePicker
                 value={new Date(date)}
+                maximumDate={new Date()}
                 mode="date"
                 display="default"
                 onChange={(event: any, selectedDate?: Date) => {
@@ -383,7 +447,11 @@ export default function ExpenseFormScreen() {
 
         {/* 저장 버튼 */}
         <View style={styles.saveButton}>
-          <Button title={isEditMode ? '수정하기' : '저장하기'} onPress={handleSave} />
+          <Button
+            title={saving ? '저장 중...' : isEditMode ? '수정하기' : '저장하기'}
+            onPress={handleSave}
+            disabled={saving}
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

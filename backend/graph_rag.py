@@ -3,6 +3,7 @@
 
 import os
 from collections import defaultdict
+from datetime import datetime
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
 
@@ -222,11 +223,14 @@ class CaslowGraphRAG:
                 
         # ── 예산 관련 질문 ──
         if any(kw in q for kw in ['예산', '한도', '얼마까지', '초과', '남은']):
+            now = datetime.now()
             rows = self._run("""
                 MATCH (b:Budget)
                 WHERE b.user_id = $user_id
+                  AND b.year = $year
+                  AND b.month = $month
                 RETURN b.amount AS amount
-            """, {"user_id": user_id})
+            """, {"user_id": user_id, "year": now.year, "month": now.month})
             for r in rows:
                 context_parts.append(
                     f"[월 예산] {r['amount']:,}원"
@@ -387,7 +391,7 @@ class CaslowGraphRAG:
             DETACH DELETE r
         """, {"id": str(recurring_id)})
 
-    def sync_budget(self, user_id: str, amount: int):
+    def sync_budget(self, user_id: str, amount: int, year: int, month: int):
         """
         월 예산 노드 추가/업데이트
         예산 저장/수정 시 호출
@@ -395,10 +399,14 @@ class CaslowGraphRAG:
         self._run("""
             MERGE (b:Budget {user_id: $user_id})
             SET b.amount   = $amount,
-                b.user_id  = $user_id
+                b.user_id  = $user_id,
+                b.year     = $year,
+                b.month    = $month
         """, {
             "user_id": user_id,
             "amount":  amount,
+            "year": year,
+            "month": month,
         })
 
 

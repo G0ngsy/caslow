@@ -29,13 +29,15 @@ interface ButtonProps {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'outline';
+  disabled?: boolean;
 }
 
-export default function Button({ title, onPress, variant = 'primary' }: ButtonProps) {
+export default function Button({ title, onPress, variant = 'primary', disabled = false }: ButtonProps) {
   return (
     <TouchableOpacity
-      style={[styles.button, variant === 'outline' && styles.outline]}
+      style={[styles.button, variant === 'outline' && styles.outline, disabled && { opacity: 0.5 }]}
       onPress={onPress}
+      disabled={disabled}
     >
       <Text style={[styles.text, variant === 'outline' && styles.outlineText]}>
         {title}

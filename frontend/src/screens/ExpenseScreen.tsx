@@ -98,12 +98,12 @@ export default function ExpenseScreen() {
       const result = await recognizeReceipt(base64, mimeType);
       if (result.success) {
         // OCR 결과를 ExpenseForm으로 전달
-        navigation.navigate('ExpenseForm', { ocrData: result.data });
+        navigation.navigate('ExpenseForm', { ocrData: result.data, formSessionId: Date.now() });
       }
     } catch (error) {
       console.error('OCR 실패:', error);
       Alert.alert('오류', '영수증 인식에 실패했습니다. 직접 입력해주세요.');
-      navigation.navigate('ExpenseForm');
+      navigation.navigate('ExpenseForm', { formSessionId: Date.now() });
     } finally {
       setLoading(false);
     }
@@ -218,7 +218,7 @@ const handleExcel = async () => {
           {/* 직접 입력 */}
           <TouchableOpacity
             style={styles.optionButton}
-            onPress={() => navigation.navigate('ExpenseForm')}
+            onPress={() => navigation.navigate('ExpenseForm', { formSessionId: Date.now() })}
           >
             <View style={styles.iconBox}>
               <Ionicons name="pencil-outline" size={32} color={Colors.primary} />
